@@ -13,11 +13,18 @@ export interface Position {
   row: number;
 }
 
+export interface TargetData {
+  value: number;
+  diff: number;
+  core_base: number;
+}
+
 export interface GameState {
   grid: Cell[][];
   previewCells: Cell[];
-  currentTarget: number;
-  nextTarget: number;
+  currentTarget: TargetData;
+  nextTarget: TargetData;
+  targetSequenceIndex: number; // 0 to 4
   score: number;
   selectedNum: Position | null;
   selectedOp: Position | null;
