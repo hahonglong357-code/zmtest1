@@ -1,35 +1,22 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cell, Operator, Position, GameState, TargetData, StorageItem, ItemType, LevelStartState } from './types';
+import { Cell, Operator, Position, GameState, TargetData, StorageItem, ItemType } from './types';
 import { supabase } from './services/supabaseClient';
+import { TARGET_CATALOG, GAME_PARAMS, ITEM_CONFIG, DIFF_UI } from './gameConfig';
 
 const NUM_HEIGHT = 3;
 const OP_HEIGHT = 4;
 const OPERATORS: Operator[] = ['+', '-', '×', '÷'];
-const GACHA_THRESHOLD = 30;
-const STORAGE_SIZE = 4;
-const TIMER_MULTIPLIER = 18;
-
-const TARGET_CATALOG: TargetData[] = [
-  { value: 24, diff: 0, core_base: 2 }, { value: 26, diff: 0, core_base: 2 }, { value: 48, diff: 0, core_base: 2 },
-  { value: 60, diff: 0, core_base: 2 }, { value: 72, diff: 0, core_base: 2 }, { value: 12, diff: 0, core_base: 2 },
-  { value: 20, diff: 0, core_base: 2 }, { value: 25, diff: 1, core_base: 5 }, { value: 49, diff: 1, core_base: 5 },
-  { value: 64, diff: 1, core_base: 5 }, { value: 81, diff: 1, core_base: 5 }, { value: 11, diff: 1, core_base: 5 },
-  { value: 29, diff: 1, core_base: 5 }, { value: 23, diff: 1, core_base: 5 }, { value: 17, diff: 1, core_base: 5 },
-  { value: 27, diff: 1, core_base: 5 }, { value: 47, diff: 2, core_base: 6 }, { value: 53, diff: 2, core_base: 6 },
-  { value: 91, diff: 2, core_base: 6 }, { value: 58, diff: 2, core_base: 6 }, { value: 62, diff: 2, core_base: 6 },
-  { value: 61, diff: 3, core_base: 8 }, { value: 71, diff: 3, core_base: 8 }, { value: 79, diff: 3, core_base: 8 },
-  { value: 94, diff: 3, core_base: 8 }, { value: 98, diff: 3, core_base: 8 }, { value: 67, diff: 4, core_base: 10 },
-  { value: 83, diff: 4, core_base: 10 }, { value: 89, diff: 4, core_base: 10 }, { value: 97, diff: 4, core_base: 10 }
-];
 
 const getTargetForAbsoluteIndex = (index: number, totalDraws: number): TargetData => {
   const GROUP_WARMUP = TARGET_CATALOG.filter(t => t.value < 40 && t.diff <= 1);
   const GROUP_LOW = TARGET_CATALOG.filter(t => t.diff <= 2);
   const GROUP_MED = TARGET_CATALOG.filter(t => t.diff === 3);
   const GROUP_HIGH = TARGET_CATALOG.filter(t => t.diff === 4);
+  
   if (index < 3) return GROUP_WARMUP[Math.floor(Math.random() * GROUP_WARMUP.length)];
+  
   const relativeIdx = index - 3;
   if (totalDraws < 2) {
     const cycleIdx = relativeIdx % 5;
@@ -52,17 +39,6 @@ const createCell = (type: 'number' | 'operator', value?: number | Operator): Cel
   type
 });
 
-const getDiffInfo = (diff: number) => {
-  const diffMap: Record<number, { label: string; color: string; bg: string; border: string }> = {
-    0: { label: 'EASY', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    1: { label: 'NORMAL', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-    2: { label: 'HARD', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
-    3: { label: 'EXPERT', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
-    4: { label: 'MASTER', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
-  };
-  return diffMap[diff] || null;
-};
-
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -73,6 +49,7 @@ const App: React.FC = () => {
   const [isGachaModalOpen, setIsGachaModalOpen] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawResult, setDrawResult] = useState<StorageItem | null>(null);
+  const [isNewDiscovery, setIsNewDiscovery] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [maxTime, setMaxTime] = useState(0);
   const timerRef = useRef<number | null>(null);
@@ -105,7 +82,7 @@ const App: React.FC = () => {
 
   // Gacha trigger logic
   useEffect(() => {
-    if (gameState && gameState.numbersUsed >= GACHA_THRESHOLD && !isGachaModalOpen && gameState.tutorialStep === null) {
+    if (gameState && gameState.numbersUsed >= GAME_PARAMS.GACHA_THRESHOLD && !isGachaModalOpen && gameState.tutorialStep === null) {
       if (gameState.storage.some(s => s === null)) {
         setIsGachaModalOpen(true);
       }
@@ -125,7 +102,7 @@ const App: React.FC = () => {
       currentTarget: initialTarget,
       nextTarget: { value: 12, diff: 0, core_base: 2 },
       totalTargetsCleared: 0, score: 0, selectedNum: null, selectedOp: null, combo: 0,
-      isGameOver: false, isPaused: false, numbersUsed: 0, totalDraws: 0, storage: Array(STORAGE_SIZE).fill(null),
+      isGameOver: false, isPaused: false, numbersUsed: 0, totalDraws: 0, storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null),
       levelStartState: null, tutorialStep: 0
     });
     setTimeLeft(100); setMaxTime(100);
@@ -149,7 +126,7 @@ const App: React.FC = () => {
 
   const resetGame = () => {
     const firstTarget = getTargetForAbsoluteIndex(0, 0);
-    const initialDuration = firstTarget.core_base * TIMER_MULTIPLIER;
+    const initialDuration = firstTarget.core_base * GAME_PARAMS.TIMER_MULTIPLIER;
     const initialGrid = [
       Array.from({ length: NUM_HEIGHT }, () => createCell('number')),
       OPERATORS.map(op => createCell('operator', op)),
@@ -159,8 +136,8 @@ const App: React.FC = () => {
       grid: initialGrid, previewCells: [createCell('number'), createCell('number'), createCell('number')],
       currentTarget: firstTarget, nextTarget: getTargetForAbsoluteIndex(1, 0),
       totalTargetsCleared: 0, score: 0, selectedNum: null, selectedOp: null, combo: 0,
-      isGameOver: false, isPaused: false, numbersUsed: 0, totalDraws: 0, storage: Array(STORAGE_SIZE).fill(null),
-      levelStartState: { grid: JSON.parse(JSON.stringify(initialGrid)), storage: Array(STORAGE_SIZE).fill(null), numbersUsed: 0 },
+      isGameOver: false, isPaused: false, numbersUsed: 0, totalDraws: 0, storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null),
+      levelStartState: { grid: JSON.parse(JSON.stringify(initialGrid)), storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null), numbersUsed: 0 },
       tutorialStep: null
     });
     setTimeLeft(initialDuration); setMaxTime(initialDuration);
@@ -172,13 +149,7 @@ const App: React.FC = () => {
     if (gameState.tutorialStep !== null) {
       if (gameState.tutorialStep < 4) return;
       const expected = [
-        { c: 0, r: 0 }, // Step 4: Click 3
-        { c: 1, r: 0 }, // Step 5: Click +
-        { c: 0, r: 1 }, // Step 6: Click 1
-        { c: 0, r: 1 }, // Step 7: Click 4 (deselect)
-        { c: 0, r: 1 }, // Step 8: Click 4 (re-select)
-        { c: 1, r: 2 }, // Step 9: Click x
-        { c: 2, r: 2 }  // Step 10: Click 6
+        { c: 0, r: 0 }, { c: 1, r: 0 }, { c: 0, r: 1 }, { c: 0, r: 1 }, { c: 0, r: 1 }, { c: 1, r: 2 }, { c: 2, r: 2 }
       ];
       const curIdx = gameState.tutorialStep - 4;
       if (curIdx >= expected.length || col !== expected[curIdx].c || row !== expected[curIdx].r) return;
@@ -215,6 +186,13 @@ const App: React.FC = () => {
       case '×': result = v1 * v2; break;
       case '÷': result = v2 !== 0 ? Math.floor(v1 / v2) : 0; break;
     }
+
+    if (result < 0) {
+      setMessage("不能得到负数");
+      setGameState(prev => prev ? ({ ...prev, selectedNum: null, selectedOp: null }) : null);
+      setIsSynthesizing(false);
+      return;
+    }
     
     setTimeout(() => {
       setGameState(prev => {
@@ -224,7 +202,6 @@ const App: React.FC = () => {
         const isMatch = result === prev.currentTarget.value;
         const resultId = generateRandomId();
         
-        // Remove sources
         if (numPos1.source === 'grid') newGrid[numPos1.col][numPos1.row] = null as any;
         else newStorage[numPos1.storageIndex!] = null;
 
@@ -241,7 +218,7 @@ const App: React.FC = () => {
         numbersUsed += 2;
         
         if (isMatch) {
-          score += (prev.currentTarget.core_base * 50) + (combo * 20);
+          score += (prev.currentTarget.core_base * GAME_PARAMS.BASE_SCORE_MULTIPLIER) + (combo * GAME_PARAMS.COMBO_SCORE_BONUS);
           combo += 1; totalTargetsCleared += 1;
           
           if (prev.tutorialStep !== null) {
@@ -254,7 +231,7 @@ const App: React.FC = () => {
           }
           
           currentTarget = nextTarget; nextTarget = getTargetForAbsoluteIndex(totalTargetsCleared + 1, totalDraws);
-          const newDuration = currentTarget.core_base * TIMER_MULTIPLIER;
+          const newDuration = currentTarget.core_base * GAME_PARAMS.TIMER_MULTIPLIER;
           setTimeLeft(newDuration); setMaxTime(newDuration);
           processedGrid = processedGrid.map((col, colIdx) => {
             if (colIdx === 1) return col;
@@ -273,13 +250,11 @@ const App: React.FC = () => {
         
         let newSelectedNum: Position | null = null;
         if (!isMatch) {
-           // Stuck check: If total synthesisable numbers < 2, it's game over
            const gridNumsCount = processedGrid.reduce((acc, col) => acc + col.filter(c => c?.type === 'number').length, 0);
            const storageNumsCount = newStorage.filter(s => s?.type === 'number').length;
            if (gridNumsCount + storageNumsCount < 2) {
              setTimeout(() => setGameState(s => s ? { ...s, isGameOver: true } : null), 1200);
            }
-
           if (numPos2.source === 'grid') {
             const rIdx = processedGrid[numPos2.col].findIndex(cell => cell?.id === resultId);
             if (rIdx !== -1) newSelectedNum = { col: numPos2.col, row: rIdx, source: 'grid' };
@@ -288,21 +263,17 @@ const App: React.FC = () => {
           }
         }
 
-        // Checkpoint the level start state whenever a target is cleared
         const levelStartState = isMatch 
           ? { grid: JSON.parse(JSON.stringify(processedGrid)), storage: JSON.parse(JSON.stringify(newStorage)), numbersUsed } 
           : prev.levelStartState;
         
         return { 
           ...prev, 
-          grid: processedGrid, 
-          storage: newStorage,
-          selectedNum: newSelectedNum, 
-          selectedOp: null, 
+          grid: processedGrid, storage: newStorage,
+          selectedNum: newSelectedNum, selectedOp: null, 
           score, combo, 
           currentTarget, nextTarget, 
-          totalTargetsCleared, 
-          numbersUsed, 
+          totalTargetsCleared, numbersUsed, 
           levelStartState,
           tutorialStep: prev.tutorialStep !== null ? prev.tutorialStep + 1 : null 
         };
@@ -328,10 +299,8 @@ const App: React.FC = () => {
     }
   };
 
-  // Extracting Tutorial View for cleaner logic
   const TutorialView = () => {
     if (gameState?.tutorialStep === null) return null;
-    
     return (
       <AnimatePresence>
         <motion.div 
@@ -341,19 +310,12 @@ const App: React.FC = () => {
           className={`absolute inset-0 z-[1100] flex items-center justify-center p-4 pointer-events-none`}
         >
           <div className="bg-white rounded-[28px] p-6 ios-shadow border border-gray-100 text-center w-full h-full flex flex-col justify-center pointer-events-auto max-h-[160px]">
-            <h3 className="text-lg font-black text-gray-900 mb-1">
-              {gameState!.tutorialStep! < 4 ? "游戏教程" : "跟我来操作"}
-            </h3>
-            <p className="text-gray-600 leading-snug text-xs font-medium mb-4">
-              {getTutorialHintText()}
-            </p>
+            <h3 className="text-lg font-black text-gray-900 mb-1">{gameState!.tutorialStep! < 4 ? "游戏教程" : "跟我来操作"}</h3>
+            <p className="text-gray-600 leading-snug text-xs font-medium mb-4">{getTutorialHintText()}</p>
             {gameState!.tutorialStep! < 4 ? (
               <button onClick={nextTutorialStep} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm active:scale-95 transition-all shadow-lg shadow-blue-500/20">我知道了，下一步</button>
             ) : (
-              <div className="flex items-center justify-center gap-2 text-blue-600 font-bold animate-bounce text-xs">
-                <i className="fas fa-hand-pointer"></i>
-                <span>点击下方闪烁块</span>
-              </div>
+              <div className="flex items-center justify-center gap-2 text-blue-600 font-bold animate-bounce text-xs"><i className="fas fa-hand-pointer"></i><span>点击下方闪烁块</span></div>
             )}
           </div>
         </motion.div>
@@ -363,12 +325,12 @@ const App: React.FC = () => {
 
   const drawProgress = useMemo(() => {
     if (!gameState) return 0;
-    return Math.min(100, (gameState.numbersUsed / GACHA_THRESHOLD) * 100);
+    return Math.min(100, (gameState.numbersUsed / GAME_PARAMS.GACHA_THRESHOLD) * 100);
   }, [gameState?.numbersUsed]);
 
   const currentDiff = useMemo(() => {
     if (!gameState) return null;
-    return getDiffInfo(gameState.currentTarget.diff);
+    return DIFF_UI[gameState.currentTarget.diff] || null;
   }, [gameState?.currentTarget.diff]);
 
   if (!gameState) return null;
@@ -378,14 +340,10 @@ const App: React.FC = () => {
   return (
     <div className="h-dvh flex flex-col items-center bg-[#f2f2f7] text-black px-4 pt-4 pb-12 overflow-hidden relative selection:bg-blue-500/20 safe-top safe-bottom">
       
-      {/* Background Dim for Tutorial */}
       <AnimatePresence>
-        {gameState.tutorialStep !== null && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[900] bg-black/70 pointer-events-none" />
-        )}
+        {gameState.tutorialStep !== null && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[900] bg-black/70 pointer-events-none" />}
       </AnimatePresence>
 
-      {/* HUD */}
       <div className={`w-full max-w-md flex justify-between items-center mb-2 px-2 shrink-0 ${gameState.tutorialStep !== null ? 'z-[1002]' : ''}`}>
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em]">当前得分</span>
@@ -401,7 +359,6 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Target Area Container */}
       <div className="w-full max-w-md relative mb-4 shrink-0 h-[170px]">
         <motion.div layout id="target-card" className={`absolute inset-0 bg-white/70 ios-blur ios-shadow rounded-[24px] pt-4 pb-3 px-4 flex flex-col items-center border border-white/50 overflow-hidden transition-all duration-300 ${gameState.tutorialStep !== null && gameState.tutorialStep < 3 ? 'z-[1001] !bg-white scale-105 ring-4 ring-blue-400 shadow-2xl' : ''}`}>
           <div className={`flex flex-col items-center transition-all ${gameState.tutorialStep === 0 ? 'scale-110' : ''}`}>
@@ -414,33 +371,22 @@ const App: React.FC = () => {
             <span className="text-[12px] font-bold">{gameState.nextTarget.value}</span>
           </div>
           <div className={`w-full h-1.5 bg-gray-100 rounded-full overflow-hidden relative transition-all ${gameState.tutorialStep === 2 ? 'ring-4 ring-blue-300 scale-y-125' : ''}`}>
-            {/* Countdown bar - Removed slow transitions for snappy refills */}
-            <div 
-              className="absolute inset-y-0 left-0 bg-blue-600" 
-              style={{ 
-                width: `${timerWidth}%`, 
-                backgroundColor: timerWidth < 30 ? '#ef4444' : '#2563eb',
-                transition: timerWidth > 98 ? 'none' : 'width 0.15s linear' 
-              }} 
-            />
+            <div className="absolute inset-y-0 left-0 bg-blue-600" style={{ width: `${timerWidth}%`, backgroundColor: timerWidth < 30 ? '#ef4444' : '#2563eb', transition: timerWidth > 98 ? 'none' : 'width 0.15s linear' }} />
           </div>
         </motion.div>
-        
         {gameState.tutorialStep !== null && gameState.tutorialStep >= 3 && <TutorialView />}
       </div>
 
-      {/* Grid Controls Area */}
       <div className={`w-full max-w-md flex justify-end mb-1 px-1 shrink-0 ${gameState.tutorialStep !== null ? 'invisible' : ''}`}>
         <button onClick={() => setGameState(p => {
           if (!p || !p.levelStartState) return p;
-          setTimeLeft(p.currentTarget.core_base * TIMER_MULTIPLIER);
+          // Time left is preserved on manual level reset as requested
           return { ...p, grid: JSON.parse(JSON.stringify(p.levelStartState.grid)), storage: JSON.parse(JSON.stringify(p.levelStartState.storage)), numbersUsed: p.levelStartState.numbersUsed, selectedNum: null, selectedOp: null };
         })} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 ios-shadow text-[11px] font-bold text-gray-500 active:scale-95 transition-all">
           <i className="fas fa-undo text-[10px]"></i> 重置本关
         </button>
       </div>
 
-      {/* Grid Area Container */}
       <div className={`w-full max-w-md relative flex-grow flex flex-col justify-center overflow-visible`}>
         <div className={`grid grid-cols-3 gap-3 px-1 transition-all duration-500 ${gameState.tutorialStep === 3 ? 'z-[1001] bg-white/20 p-4 rounded-3xl ring-4 ring-blue-400 scale-105 shadow-2xl' : ''}`}>
           {gameState.grid.map((column, colIdx) => (
@@ -448,29 +394,17 @@ const App: React.FC = () => {
               {column.map((cell, rowIdx) => {
                 if (!cell) return null;
                 const isSelected = gameState.selectedNum?.source === 'grid' && gameState.selectedNum?.col === colIdx && gameState.selectedNum?.row === rowIdx || gameState.selectedOp?.col === colIdx && gameState.selectedOp?.row === rowIdx;
-                
                 let isGuided = false;
                 if (gameState.tutorialStep !== null) {
-                  const guideMap = [
-                    { c: 0, r: 0 }, { c: 1, r: 0 }, { c: 0, r: 1 }, { c: 0, r: 1 }, { c: 0, r: 1 }, { c: 1, r: 2 }, { c: 2, r: 2 }
-                  ];
+                  const guideMap = [{ c: 0, r: 0 }, { c: 1, r: 0 }, { c: 0, r: 1 }, { c: 0, r: 1 }, { c: 0, r: 1 }, { c: 1, r: 2 }, { c: 2, r: 2 }];
                   const curActionIdx = gameState.tutorialStep - 4;
                   if (curActionIdx >= 0 && curActionIdx < guideMap.length) {
                     const targetPos = guideMap[curActionIdx];
                     if (colIdx === targetPos.c && rowIdx === targetPos.r) isGuided = true;
                   }
                 }
-
                 return (
-                  <motion.button 
-                    key={cell.id} 
-                    layout 
-                    initial={{ opacity: 0, scale: 0.9 }} 
-                    animate={{ opacity: 1, scale: 1 }} 
-                    whileTap={{ scale: 0.94 }} 
-                    onClick={() => handleCellClick(colIdx, rowIdx)} 
-                    className={`relative h-14 sm:h-18 w-full flex items-center justify-center rounded-[20px] text-xl font-bold transition-all duration-300 ios-shadow ${cell.type === 'operator' ? 'bg-orange-50/80 text-orange-500 border border-orange-100' : 'bg-white text-black border border-white/50'} ${isSelected ? 'ring-4 ring-blue-500/30 !bg-blue-600 !text-white !border-blue-600 shadow-lg scale-110' : ''} ${isGuided ? 'z-[1001] ring-4 ring-blue-500 animate-pulse !shadow-2xl' : ''}`}
-                  >
+                  <motion.button key={cell.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} whileTap={{ scale: 0.94 }} onClick={() => handleCellClick(colIdx, rowIdx)} className={`relative h-14 sm:h-18 w-full flex items-center justify-center rounded-[20px] text-xl font-bold transition-all duration-300 ios-shadow ${cell.type === 'operator' ? 'bg-orange-50/80 text-orange-500 border border-orange-100' : 'bg-white text-black border border-white/50'} ${isSelected ? 'ring-4 ring-blue-500/30 !bg-blue-600 !text-white !border-blue-600 shadow-lg scale-110' : ''} ${isGuided ? 'z-[1001] ring-4 ring-blue-500 animate-pulse !shadow-2xl' : ''}`}>
                     {cell.value}
                   </motion.button>
                 );
@@ -478,14 +412,9 @@ const App: React.FC = () => {
             </div>
           ))}
         </div>
-        {gameState.tutorialStep !== null && gameState.tutorialStep < 3 && (
-          <div className="absolute inset-0 z-[1002] flex items-center justify-center p-4">
-             <TutorialView />
-          </div>
-        )}
+        {gameState.tutorialStep !== null && gameState.tutorialStep < 3 && <div className="absolute inset-0 z-[1002] flex items-center justify-center p-4"><TutorialView /></div>}
       </div>
 
-      {/* Bottom Area (Gacha/Storage) */}
       <div className={`w-full max-w-md mt-4 px-2 shrink-0 ${gameState.tutorialStep !== null ? 'opacity-10 pointer-events-none' : ''}`}>
         <div className="flex justify-between items-end mb-1.5">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">抽卡进度</span>
@@ -502,26 +431,22 @@ const App: React.FC = () => {
                 if (!item) return;
                 if (item.type === 'number') {
                   if (gameState.selectedNum?.source === 'storage' && gameState.selectedNum.storageIndex === i) {
-                    setGameState(p => p ? { ...p, selectedNum: null, selectedOp: null } : null);
-                    return;
+                    setGameState(p => p ? { ...p, selectedNum: null, selectedOp: null } : null); return;
                   }
                   if (gameState.selectedNum && gameState.selectedOp) {
-                    performSynthesis(gameState.selectedNum, gameState.selectedOp, { col: -1, row: -1, source: 'storage', storageIndex: i });
-                    return;
+                    performSynthesis(gameState.selectedNum, gameState.selectedOp, { col: -1, row: -1, source: 'storage', storageIndex: i }); return;
                   }
                   setGameState(p => p ? { ...p, selectedNum: { col: -1, row: -1, source: 'storage', storageIndex: i } } : null);
                 } else if (item.type === 'timer') {
-                  setTimeLeft(prev => Math.min(maxTime, prev + 15));
+                  setTimeLeft(prev => Math.min(maxTime, prev + ITEM_CONFIG.TIMER_ADD_SECONDS));
                   setGameState(p => {
                     if (!p) return null;
-                    const nextStorage = [...p.storage];
-                    nextStorage[i] = null;
+                    const nextStorage = [...p.storage]; nextStorage[i] = null;
                     return { ...p, storage: nextStorage };
                   });
-                  setMessage("时间增加 15s");
+                  setMessage(`时间增加 ${ITEM_CONFIG.TIMER_ADD_SECONDS}s`);
                 } else if (item.type === 'refresh') {
-                   resetGame();
-                   setMessage("棋盘已刷新");
+                   resetGame(); setMessage("棋盘已刷新");
                 }
               }}
               className={`aspect-square rounded-[16px] ios-shadow border flex items-center justify-center transition-all ${item ? 'bg-white border-white/50 active:scale-90' : 'bg-gray-100/50 border-dashed border-gray-200'} ${gameState.selectedNum?.source === 'storage' && gameState.selectedNum.storageIndex === i ? 'ring-2 ring-blue-500 scale-105' : ''}`}
@@ -534,17 +459,14 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Gacha Modal */}
       <AnimatePresence>
         {isGachaModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[2000] bg-black/60 ios-blur flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-[32px] p-8 w-full max-w-xs ios-shadow text-center relative overflow-hidden">
               <h2 className="text-2xl font-black mb-6 tracking-tight">幸运抽奖</h2>
-              <div className="h-32 flex items-center justify-center mb-8">
+              <div className="min-h-32 flex flex-col items-center justify-center mb-6">
                 {isDrawing ? (
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.5, ease: 'linear' }} className="text-5xl text-blue-600">
-                    <i className="fas fa-spinner"></i>
-                  </motion.div>
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.5, ease: 'linear' }} className="text-5xl text-blue-600"><i className="fas fa-spinner"></i></motion.div>
                 ) : drawResult ? (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex flex-col items-center">
                     <div className="w-20 h-20 bg-blue-50 rounded-[24px] flex items-center justify-center mb-4">
@@ -553,6 +475,12 @@ const App: React.FC = () => {
                       {drawResult.type === 'timer' && <i className="fas fa-stopwatch text-rose-500 text-4xl"></i>}
                       {drawResult.type === 'refresh' && <i className="fas fa-sync-alt text-emerald-500 text-4xl"></i>}
                     </div>
+                    {isNewDiscovery && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-2 px-6">
+                         <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full mb-2 inline-block">新道具发现</div>
+                         <p className="text-gray-500 text-xs font-medium leading-relaxed">{ITEM_CONFIG.DESCRIPTIONS[drawResult.type]}</p>
+                      </motion.div>
+                    )}
                   </motion.div>
                 ) : (
                   <i className="fas fa-gift text-6xl text-gray-200"></i>
@@ -566,38 +494,29 @@ const App: React.FC = () => {
                       const pool: ItemType[] = ['score', 'number', 'timer', 'refresh'];
                       const type = pool[Math.floor(Math.random() * pool.length)];
                       const result = { id: generateRandomId(), type, value: type === 'number' ? Math.floor(Math.random() * 9) + 1 : undefined };
+                      const storageKey = `seen_item_${type}`;
+                      const hasSeen = localStorage.getItem(storageKey);
+                      if (!hasSeen) { setIsNewDiscovery(true); localStorage.setItem(storageKey, 'true'); } else { setIsNewDiscovery(false); }
                       setGameState(prev => {
                         if (!prev) return null;
                         let { score, numbersUsed, totalDraws, storage } = prev;
-                        if (type === 'score') score += 500;
-                        else {
-                          const idx = storage.indexOf(null);
-                          if (idx !== -1) storage[idx] = result;
-                        }
+                        if (type === 'score') score += ITEM_CONFIG.SCORE_PACK_POINTS;
+                        else { const idx = storage.indexOf(null); if (idx !== -1) storage[idx] = result; }
                         return { ...prev, score, numbersUsed: 0, totalDraws: totalDraws + 1, storage: [...storage] };
                       });
-                      setDrawResult(result);
-                      setIsDrawing(false);
+                      setDrawResult(result); setIsDrawing(false);
                     }, 1500);
                   }} 
-                  className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold active:scale-95"
-                >
-                  点击开启
-                </button>
+                  className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold active:scale-95 shadow-lg shadow-blue-500/20"
+                >点击开启</button>
               ) : (
-                <button 
-                  onClick={() => { setIsGachaModalOpen(false); setDrawResult(null); }} 
-                  className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95"
-                >
-                  收下奖励
-                </button>
+                <button onClick={() => { setIsGachaModalOpen(false); setDrawResult(null); setIsNewDiscovery(false); }} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95">收下奖励</button>
               )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Game Over Modal */}
       <AnimatePresence>
         {gameState.isGameOver && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[3000] bg-black/40 ios-blur flex items-center justify-center p-6 text-center">
@@ -607,34 +526,14 @@ const App: React.FC = () => {
                 <div className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Final Score</div>
                 <div className="text-4xl font-black text-blue-600">{gameState.score}</div>
               </div>
-              <input 
-                type="text" 
-                placeholder="输入你的昵称" 
-                value={username} 
-                onChange={e => setUsername(e.target.value)} 
-                className="w-full bg-gray-50 border-gray-100 border rounded-xl px-4 py-4 mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" 
-              />
-              <button 
-                onClick={() => { 
-                  if (!username.trim() || gameState.score === 0) {
-                     resetGame();
-                     return;
-                  }
-                  supabase.from('high_scores').insert([{ username, score: gameState.score }]).then(fetchLeaderboard); 
-                  resetGame(); 
-                  setUsername(''); 
-                }} 
-                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold mb-2 shadow-xl shadow-blue-500/20 active:scale-95"
-              >
-                保存成绩
-              </button>
+              <input type="text" placeholder="输入你的昵称" value={username} onChange={e => setUsername(e.target.value)} className="w-full bg-gray-50 border-gray-100 border rounded-xl px-4 py-4 mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+              <button onClick={() => { if (!username.trim() || gameState.score === 0) { resetGame(); return; } supabase.from('high_scores').insert([{ username, score: gameState.score }]).then(fetchLeaderboard); resetGame(); setUsername(''); }} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold mb-2 shadow-xl shadow-blue-500/20 active:scale-95">保存成绩</button>
               <button onClick={resetGame} className="w-full py-3 text-gray-400 font-bold active:scale-95">重新开始</button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Leaderboard Overlay */}
       <AnimatePresence>
         {showLeaderboard && (
           <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className="fixed inset-0 z-[2500] bg-white flex flex-col pt-safe">
@@ -662,22 +561,13 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Toast Notification */}
       <AnimatePresence>
         {message && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8, y: 50 }} 
-            animate={{ opacity: 1, scale: 1, y: 0 }} 
-            exit={{ opacity: 0, scale: 0.8 }} 
-            className="fixed inset-x-0 top-1/2 -translate-y-1/2 mx-auto z-[4000] w-fit max-w-[80vw] bg-gray-900/95 text-white text-center font-bold px-10 py-6 rounded-3xl ios-shadow ios-blur"
-            onAnimationComplete={() => setTimeout(() => setMessage(null), 2300)}
-          >
-            <div className="text-4xl mb-3">✨</div>
-            <div className="text-lg">{message}</div>
+          <motion.div initial={{ opacity: 0, scale: 0.8, y: 50 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.8 }} className="fixed inset-x-0 top-1/2 -translate-y-1/2 mx-auto z-[4000] w-fit max-w-[80vw] bg-gray-900/95 text-white text-center font-bold px-10 py-6 rounded-3xl ios-shadow ios-blur" onAnimationComplete={() => setTimeout(() => setMessage(null), 2300)}>
+            <div className="text-4xl mb-3">✨</div><div className="text-lg">{message}</div>
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 };
