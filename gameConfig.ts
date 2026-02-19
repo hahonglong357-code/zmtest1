@@ -123,8 +123,8 @@ export const TARGET_CATALOG: TargetData[] = [
  * ==========================================
  */
 export const GAME_PARAMS = {
-  GACHA_THRESHOLD: 30,      // Progress needed to trigger a draw
-  GACHA_TARGETS_THRESHOLD: 6, // Targets cleared to trigger a gacha draw
+  GACHA_THRESHOLD: 6,       // Numbers used to trigger a gacha draw
+  GACHA_TARGETS_THRESHOLD: 4, // Targets cleared to trigger a gacha draw
   TIMER_MULTIPLIER: 18,     // Seconds per core_base unit (e.g., 2 * 18 = 36s)
   STORAGE_SIZE: 4,          // Number of item slots
   COMBO_SCORE_BONUS: 20,    // Points per combo
@@ -140,11 +140,82 @@ export const ITEM_CONFIG = {
   TIMER_ADD_SECONDS: 15,
   SCORE_PACK_POINTS: 500,
   DESCRIPTIONS: {
-    number: "合成助手：存放在储物格中，可随时取用参与合成，帮你化解僵局。",
-    timer: `时间增益：点击即用，瞬间为你的挑战延长 ${15} 秒倒计时。`,
-    refresh: "棋盘刷新：当你觉得无计可施时，点击它来重置整个棋盘布局。",
-    score: `幸运礼包：直接获得 ${500} 额外积分，让你的排名更进一步。`
+    number: "数字工具：存放在储物格中，可随时取用参与合成，帮你化解僵局。",
+    timer: `加时工具：点击即用，瞬间为你的挑战延长 ${15} 秒倒计时。`,
+    refresh: "刷新令牌：当你觉得无计可施时，点击它来重置整个棋盘布局。",
+    score: `一袋子金币：直接获得 ${500} 额外积分，让你的排名更进一步。`
+  } as Record<ItemType, string>,
+  NAMES: {
+    number: "数字工具",
+    timer: "加时工具",
+    refresh: "刷新令牌",
+    score: "一袋子金币"
   } as Record<ItemType, string>
+};
+
+/**
+ * ==========================================
+ * GACHA NARRATIVE CONFIG - 抽卡叙事配置
+ * ==========================================
+ */
+export const GACHA_NARRATIVES = {
+  // 获得道具时的预设文案
+  ITEM_INTROS: [
+    "你和数字士兵搏斗，它掉落了",
+    "在路上看到一个袋子，戳了戳，露出来一个",
+    "数字士兵向你求饶，并给你"
+  ] as string[],
+  // 道具名称映射（用于文案组合）
+  ITEM_NAMES: {
+    number: "数字工具",
+    timer: "加时工具",
+    refresh: "刷新令牌",
+    score: "一袋子金币"
+  } as Record<ItemType, string>
+};
+
+/**
+ * ==========================================
+ * GACHA EVENTS CONFIG - 抽卡事件配置
+ * ==========================================
+ */
+export type GachaEventConfig = {
+  id: string;
+  text: string;
+  icon: string;
+  iconColor: string;
+};
+
+export const GACHA_EVENTS: GachaEventConfig[] = [
+  {
+    id: 'time_half',
+    text: "你沉浸在上一次胜利中，这次迟到了，接下来的两回合时间减半",
+    icon: 'fa-clock',
+    iconColor: 'text-amber-500'
+  },
+  {
+    id: 'items_lost',
+    text: "你来的路上摔了一跤，道具都掉了你也不知道",
+    icon: 'fa-tshirt',
+    iconColor: 'text-rose-500'
+  }
+];
+
+/**
+ * ==========================================
+ * GACHA POOLS - 抽卡奖池配置
+ * ==========================================
+ */
+export const GACHA_ITEM_POOL: ItemType[] = ['score', 'number', 'timer', 'refresh'];
+
+/**
+ * ==========================================
+ * GACHA CONFIG - 抽卡概率配置
+ * ==========================================
+ */
+export const GACHA_CONFIG = {
+  /** 获得道具的概率 (0.5 = 50% 道具, 50% 事件) */
+  ITEM_CHANCE: 0.7
 };
 
 /**

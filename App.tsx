@@ -42,7 +42,7 @@ const App: React.FC = () => {
 
   // 计算计时器时长和激活状态
   const timerDuration = (game.gameState && game.gameState.currentTarget && game.gameState.tutorialStep === null)
-    ? game.gameState.currentTarget.core_base * GAME_PARAMS.TIMER_MULTIPLIER
+    ? game.gameState.currentTarget.core_base * GAME_PARAMS.TIMER_MULTIPLIER * (game.gameState.timePenaltyCount > 0 ? 0.5 : 1)
     : 100; // 教程期间或无目标时固定100秒
 
   const timerActive = FEATURES.TIMER && !!game.gameState && !game.gameState.isGameOver && !game.gameState.isPaused &&
@@ -65,7 +65,7 @@ const App: React.FC = () => {
     if (savedUsername) setUsername(savedUsername);
   }, []);
 
-  // Gacha trigger
+  // Gacha trigger - 每完成一个目标触发一次抽卡
   useEffect(() => {
     if (!FEATURES.GACHA || !game.gameState) return;
     if (game.gameState.totalTargetsCleared > 0 &&
@@ -113,14 +113,35 @@ const App: React.FC = () => {
       game.setGameState(prev => {
         if (!prev) return null;
         let score = prev.score;
-        const newStorage = [...prev.storage];
-        if (result.type === 'score') {
-          score += ITEM_CONFIG.SCORE_PACK_POINTS;
+        let newStorage = [...prev.storage];
+        let timePenaltyCount = prev.timePenaltyCount;
+
+        if (result.resultType === 'item') {
+          // 获得道具
+          if (result.item.type === 'score') {
+            score += ITEM_CONFIG.SCORE_PACK_POINTS;
+          } else {
+            const idx = newStorage.indexOf(null);
+            if (idx !== -1) newStorage[idx] = result.item;
+          }
         } else {
-          const idx = newStorage.indexOf(null);
-          if (idx !== -1) newStorage[idx] = result;
+          // 发生事件
+          if (result.eventId === 'items_lost') {
+            // 清空道具
+            newStorage = Array(GAME_PARAMS.STORAGE_SIZE).fill(null);
+          } else if (result.eventId === 'time_half') {
+            // 时间惩罚：接下来两回合减半
+            timePenaltyCount = 2;
+          }
         }
-        return { ...prev, score, numbersUsed: 0, totalDraws: prev.totalDraws + 1, storage: newStorage };
+
+        return {
+          ...prev,
+          score,
+          totalDraws: prev.totalDraws + 1,
+          storage: newStorage,
+          timePenaltyCount
+        };
       });
     });
   };
@@ -223,7 +244,7 @@ const App: React.FC = () => {
 
       {FEATURES.GACHA && (
         <GachaModal
-          isOpen={gacha.isOpen} isDrawing={gacha.isDrawing} drawResult={gacha.drawResult} isNewDiscovery={gacha.isNewDiscovery}
+          isOpen={gacha.isOpen} isDrawing={gacha.isDrawing} drawResult={gacha.drawResult}
           onDraw={handleGachaDraw} onClaim={gacha.claimReward} t={t}
         />
       )}

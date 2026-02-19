@@ -9,6 +9,31 @@ export interface StorageItem {
   value?: number;
 }
 
+// 抽卡结果类型
+export type GachaResultType = 'item' | 'event';
+
+// 抽卡道具结果
+export interface GachaItemResult {
+  type: GachaResultType;
+  resultType: 'item';
+  item: StorageItem;
+  narrativeText: string;
+  itemName: string;
+}
+
+// 抽卡事件结果
+export type GachaEventId = 'time_half' | 'items_lost';
+
+export interface GachaEventResult {
+  type: GachaResultType;
+  resultType: 'event';
+  eventId: GachaEventId;
+  eventText: string;
+}
+
+// 联合类型
+export type GachaResult = GachaItemResult | GachaEventResult;
+
 export interface Cell {
   id: string;
   value: number | Operator;
@@ -53,4 +78,5 @@ export interface GameState {
   levelStartState: LevelStartState | null;
   tutorialStep: number | null; // null means tutorial finished or not started
   lastGachaThreshold: number;
+  timePenaltyCount: number; // 剩余时间惩罚次数（事件效果计数）
 }

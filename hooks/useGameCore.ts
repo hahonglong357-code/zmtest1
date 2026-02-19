@@ -27,7 +27,8 @@ export function useGameCore(t: Translations) {
             storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null),
             levelStartState: { grid: JSON.parse(JSON.stringify(initialGrid)), storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null), numbersUsed: 0 },
             tutorialStep: null,
-            lastGachaThreshold: 0
+            lastGachaThreshold: 0,
+            timePenaltyCount: 0
         });
         return firstTarget;
     }, []);
@@ -47,7 +48,8 @@ export function useGameCore(t: Translations) {
             isGameOver: false, isPaused: false, numbersUsed: 0, totalDraws: 0,
             storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null),
             levelStartState: null, tutorialStep: 0,
-            lastGachaThreshold: 0
+            lastGachaThreshold: 0,
+            timePenaltyCount: 0
         });
     }, []);
 
@@ -119,8 +121,11 @@ export function useGameCore(t: Translations) {
                 }
 
                 let processedGrid = newGrid.map((col, idx) => idx === 1 ? col : col.filter(cell => cell !== null));
-                let { totalTargetsCleared, currentTarget, nextTarget, score, combo, numbersUsed, totalDraws } = prev;
+                let { totalTargetsCleared, currentTarget, nextTarget, score, combo, numbersUsed, totalDraws, timePenaltyCount } = prev;
                 numbersUsed += 2;
+
+                // 目标匹配时减少时间惩罚计数
+                const newTimePenaltyCount = isMatch ? Math.max(0, timePenaltyCount - 1) : timePenaltyCount;
 
                 if (isMatch) {
                     // 播放成功音效
@@ -181,7 +186,8 @@ export function useGameCore(t: Translations) {
                     currentTarget, nextTarget,
                     totalTargetsCleared, numbersUsed,
                     levelStartState,
-                    tutorialStep: prev.tutorialStep !== null ? prev.tutorialStep + 1 : null
+                    tutorialStep: prev.tutorialStep !== null ? prev.tutorialStep + 1 : null,
+                    timePenaltyCount: newTimePenaltyCount
                 };
             });
             setIsSynthesizing(false);
