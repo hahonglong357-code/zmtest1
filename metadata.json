@@ -1,5 +1,5 @@
 {
-  "name": "24点：放飞版",
-  "description": "一个富有挑战性的数字合成谜题游戏，在动态落块网格中利用算术运算合成目标数字。",
+  "name": "Beyond 24: Number Challenge",
+  "description": "A challenging number synthesis puzzle game where you use arithmetic operations to reach target numbers in a dynamic grid.",
   "requestFramePermissions": []
 }
