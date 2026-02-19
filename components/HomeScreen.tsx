@@ -6,16 +6,25 @@ interface HomeScreenProps {
     personalHighScore: number;
     language: Language;
     onLanguageToggle: () => void;
+    onShowTutorial: () => void;
     t: Translations;
     onStartGame: () => void;
     onShowLeaderboard: () => void;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({
-    personalHighScore, language, onLanguageToggle, t, onStartGame, onShowLeaderboard
+    personalHighScore, language, onLanguageToggle, onShowTutorial, t, onStartGame, onShowLeaderboard
 }) => (
     <div className="h-dvh flex flex-col items-center justify-center bg-[#FDFDFD] p-8 text-center safe-top safe-bottom overflow-hidden relative">
-        <div className="absolute top-8 right-8 z-20">
+        <div className="absolute top-8 right-8 z-20 flex gap-2">
+            <button
+                onClick={onShowTutorial}
+                className="px-4 py-2 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-300 shadow-sm active:scale-95 transition-all"
+                title={t.tutorial_title}
+            >
+                <i className="fas fa-question mr-1"></i>
+                {t.tutorial_title}
+            </button>
             <button
                 onClick={onLanguageToggle}
                 className="px-4 py-2 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-300 shadow-sm active:scale-95 transition-all"

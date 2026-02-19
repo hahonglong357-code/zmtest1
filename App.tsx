@@ -133,6 +133,10 @@ const App: React.FC = () => {
           personalHighScore={personalHighScore}
           language={language}
           onLanguageToggle={() => setLanguage(l => l === 'zh' ? 'en' : 'zh')}
+          onShowTutorial={() => {
+            game.startTutorial();
+            setCurrentView('game');
+          }}
           t={t}
           onStartGame={() => {
             const hasVisited = localStorage.getItem('quest_visited');
