@@ -104,7 +104,8 @@ const App: React.FC = () => {
       game.useStorageItem(index);
       game.setMessage(`${t.timer_add_msg} ${ITEM_CONFIG.TIMER_ADD_SECONDS}s`);
     } else if (item.type === 'refresh') {
-      game.resetGame();
+      game.refreshTarget();
+      game.useStorageItem(index);
       game.setMessage(t.refresh_msg);
     }
   };
@@ -130,8 +131,12 @@ const App: React.FC = () => {
         } else {
           // 发生事件
           if (result.eventId === 'items_lost') {
-            // 清空道具
-            newStorage = Array(GAME_PARAMS.STORAGE_SIZE).fill(null);
+            // 随机丢失一个道具
+            const filledIndices = newStorage.map((item, idx) => item !== null ? idx : -1).filter(idx => idx !== -1);
+            if (filledIndices.length > 0) {
+              const randomIdx = filledIndices[Math.floor(Math.random() * filledIndices.length)];
+              newStorage[randomIdx] = null;
+            }
           } else if (result.eventId === 'time_half') {
             // 时间惩罚：接下来两回合减半
             timePenaltyCount = 2;

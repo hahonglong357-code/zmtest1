@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Cell, Operator, Position, GameState } from '../types';
-import { GAME_PARAMS, DIFF_UI, NUM_HEIGHT, OP_HEIGHT, OPERATORS, createCell, generateRandomId, getTargetForAbsoluteIndex } from '../gameConfig';
+import { GAME_PARAMS, DIFF_UI, NUM_HEIGHT, OP_HEIGHT, OPERATORS, createCell, generateRandomId, getTargetForAbsoluteIndex, setTargetScore, SEQUENCE_PATTERNS, getSequenceOrder } from '../gameConfig';
 import { FEATURES } from '../featureFlags';
 import { Translations } from '../i18n';
 import { playFusionSound, playSuccessSound, playErrorSound } from '../services/soundEffects';
@@ -160,6 +160,17 @@ export function useGameCore(t: Translations) {
                     if (FEATURES.COMBO) combo += 1;
                     totalTargetsCleared += 1;
 
+                    // 检查是否完成了一个序列，完成后根据当前分数更新序列配置
+                    const mainTargetsCleared = totalTargetsCleared - 3; // 去掉热身阶段的3个
+                    if (mainTargetsCleared > 0) {
+                        const currentSequenceOrder = getSequenceOrder(score);
+                        const sequenceLength = currentSequenceOrder.reduce((sum, key) => sum + SEQUENCE_PATTERNS[key].length, 0);
+                        if (mainTargetsCleared % sequenceLength === 0) {
+                            // 序列完成，更新序列配置
+                            setTargetScore(score);
+                        }
+                    }
+
                     if (prev.tutorialStep !== null) {
                         setMessage(t.tutorial_complete_msg);
                         setTimeout(() => {
@@ -314,6 +325,28 @@ export function useGameCore(t: Translations) {
         }) : null);
     }, [gameState?.levelStartState]);
 
+    // 刷新目标数字（跳过当前目标）
+    const refreshTarget = useCallback(() => {
+        if (!gameState) return;
+        const newTarget = getTargetForAbsoluteIndex(gameState.totalTargetsCleared + 1, gameState.totalDraws);
+        const newNextTarget = getTargetForAbsoluteIndex(gameState.totalTargetsCleared + 2, gameState.totalDraws);
+        // 重置棋盘数字
+        const newGrid = [
+            Array.from({ length: NUM_HEIGHT }, () => createCell('number')),
+            Array.from({ length: OP_HEIGHT }, () => createCell('op')),
+            Array.from({ length: NUM_HEIGHT }, () => createCell('number'))
+        ];
+        setGameState(prev => prev ? ({
+            ...prev,
+            currentTarget: newTarget,
+            nextTarget: newNextTarget,
+            grid: newGrid,
+            selectedNum: null,
+            selectedOp: null,
+            combo: 0
+        }) : null);
+    }, [gameState]);
+
     const useStorageItem = useCallback((index: number) => {
         setGameState(p => {
             if (!p) return null;
@@ -341,7 +374,7 @@ export function useGameCore(t: Translations) {
         message, setMessage,
         resetGame, startTutorial, nextTutorialStep, getTutorialHintText,
         handleCellClick, handleStorageNumberClick,
-        resetLevel, useStorageItem,
+        resetLevel, useStorageItem, refreshTarget,
         drawProgress, currentDiff,
         scorePopups, triggerScorePopup,
     };

@@ -124,7 +124,7 @@ export const TARGET_CATALOG: TargetData[] = [
  */
 export const GAME_PARAMS = {
   GACHA_THRESHOLD: 6,       // Numbers used to trigger a gacha draw
-  GACHA_TARGETS_THRESHOLD: 4, // Targets cleared to trigger a gacha draw
+  GACHA_TARGETS_THRESHOLD: 1, // Targets cleared to trigger a gacha draw
   TIMER_MULTIPLIER: 18,     // Seconds per core_base unit (e.g., 2 * 18 = 36s)
   STORAGE_SIZE: 4,          // Number of item slots
   COMBO_SCORE_BONUS: 20,    // Points per combo
@@ -196,7 +196,7 @@ export const GACHA_EVENTS: GachaEventConfig[] = [
   },
   {
     id: 'items_lost',
-    text: "你来的路上摔了一跤，道具都掉了你也不知道",
+    text: "你来的路上摔了一跤，道具掉了你也不知道",
     icon: 'fa-tshirt',
     iconColor: 'text-rose-500'
   },
@@ -222,7 +222,7 @@ export const GACHA_ITEM_POOL: ItemType[] = ['score', 'number', 'timer', 'refresh
  */
 export const GACHA_CONFIG = {
   /** 获得道具的概率 (0.5 = 50% 道具, 50% 事件) */
-  ITEM_CHANCE: 0.7
+  ITEM_CHANCE: 0.8
 };
 
 /**
@@ -369,13 +369,34 @@ export type SequencePatternKey = keyof typeof SEQUENCE_PATTERNS;
 
 /**
  * ==========================================
+ * SCORE THRESHOLDS - 分数阈值配置
+ * ==========================================
+ */
+export const SCORE_THRESHOLDS = {
+  /** 困难序列解锁分数 */
+  HARD_UNLOCK: 3000,
+  /** 专家序列解锁分数 */
+  EXPERT_UNLOCK: 8000,
+} as const;
+
+/**
+ * ==========================================
  * MAIN SEQUENCE ORDER - 主序列循环顺序
  * ==========================================
- * 定义序列的播放顺序：两个正常 + 一个困难 交替
+ * 根据分数动态决定序列顺序
  */
-export const MAIN_SEQUENCE_ORDER: SequencePatternKey[] = [
-  'NORMAL', 'NORMAL', 'HARD'
-];
+export const getSequenceOrder = (currentScore: number): SequencePatternKey[] => {
+  if (currentScore < SCORE_THRESHOLDS.HARD_UNLOCK) {
+    // 低于3000分：只有NORMAL
+    return ['NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL'];
+  } else if (currentScore < SCORE_THRESHOLDS.EXPERT_UNLOCK) {
+    // 3000-8000分：两个NORMAL一个HARD
+    return ['NORMAL', 'NORMAL', 'HARD'];
+  } else {
+    // 8000分以上：NORMAL和HARD交替
+    return ['NORMAL', 'HARD'];
+  }
+};
 
 /**
  * ==========================================
@@ -383,6 +404,19 @@ export const MAIN_SEQUENCE_ORDER: SequencePatternKey[] = [
  * ==========================================
  */
 class TargetGenerator {
+  private currentSequenceOrder: SequencePatternKey[] = ['NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL'];
+  private sequenceIndex: number = 0;
+
+  /** 设置当前分数，决定使用的序列（每个序列完成后调用） */
+  setScore(score: number): void {
+    const newOrder = getSequenceOrder(score);
+    // 只有当序列配置发生变化时才更新
+    if (JSON.stringify(newOrder) !== JSON.stringify(this.currentSequenceOrder)) {
+      this.currentSequenceOrder = newOrder;
+      this.sequenceIndex = 0; // 重置到新序列的开头
+    }
+  }
+
   /** 获取随机目标 */
   getTarget(absoluteIndex: number): TargetData {
     // 前3个目标使用热身池
@@ -392,14 +426,14 @@ class TargetGenerator {
 
     // 计算在主序列中的位置
     const mainIndex = absoluteIndex - 3;
-    const mainSequenceLength = MAIN_SEQUENCE_ORDER.reduce((sum, key) => sum + SEQUENCE_PATTERNS[key].length, 0);
+    const mainSequenceLength = this.currentSequenceOrder.reduce((sum, key) => sum + SEQUENCE_PATTERNS[key].length, 0);
     const cyclePosition = mainIndex % mainSequenceLength;
 
     // 确定当前在哪个序列中
     let remaining = cyclePosition;
     let currentSequenceKey: SequencePatternKey = 'NORMAL';
 
-    for (const seqKey of MAIN_SEQUENCE_ORDER) {
+    for (const seqKey of this.currentSequenceOrder) {
       const seqLength = SEQUENCE_PATTERNS[seqKey].length;
       if (remaining < seqLength) {
         currentSequenceKey = seqKey;
@@ -410,8 +444,16 @@ class TargetGenerator {
 
     // 获取当前序列的配置和位置
     const sequenceConfig = SEQUENCE_PATTERNS[currentSequenceKey];
+    const currentSeqLength = sequenceConfig.length;
     const stepIndex = remaining % sequenceConfig.length;
     const diffGroup = sequenceConfig.steps[stepIndex].diffGroup;
+
+    // 检查是否完成了一个序列，如果是则更新序列配置
+    const nextRemaining = remaining + 1;
+    if (nextRemaining >= currentSeqLength) {
+      // 序列完成，准备切换
+      this.sequenceIndex = (this.sequenceIndex + 1) % this.currentSequenceOrder.length;
+    }
 
     // 从对应难度组获取随机目标
     return getRandomFromDiffs(DIFF_GROUPS[diffGroup]);
@@ -424,4 +466,9 @@ export const targetGenerator = new TargetGenerator();
 // 兼容旧接口的函数
 export const getTargetForAbsoluteIndex = (index: number, _totalDraws: number): TargetData => {
   return targetGenerator.getTarget(index);
+};
+
+/** 设置当前分数，用于决定序列难度 */
+export const setTargetScore = (score: number): void => {
+  targetGenerator.setScore(score);
 };
