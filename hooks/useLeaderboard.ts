@@ -16,9 +16,32 @@ export function useLeaderboard() {
         } catch (e) { console.error(e); }
     }, []);
 
+    const MAX_ENTRIES = 500;
+
     const submitScore = useCallback(async (username: string, score: number) => {
         if (!username.trim() || score === 0) return;
         localStorage.setItem('last_username', username.trim());
+
+        // 检查当前条目数量，限制为500
+        const { count } = await supabase
+            .from('high_scores')
+            .select('*', { count: 'exact', head: true });
+
+        if (count !== null && count >= MAX_ENTRIES) {
+            // 获取当前最低分
+            const { data: lowestScores } = await supabase
+                .from('high_scores')
+                .select('id, score')
+                .order('score', { ascending: true })
+                .limit(count - MAX_ENTRIES + 1);
+
+            if (lowestScores && lowestScores.length > 0) {
+                const lowestIds = lowestScores.map(s => s.id);
+                // 删除最低分记录
+                await supabase.from('high_scores').delete().in('id', lowestIds);
+            }
+        }
+
         await supabase.from('high_scores').insert([{ username, score }]);
         fetchLeaderboard();
     }, [fetchLeaderboard]);

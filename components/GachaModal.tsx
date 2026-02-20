@@ -78,9 +78,6 @@ const GachaModal: React.FC<GachaModalProps> = ({ isOpen, isDrawing, drawResult, 
                     className="mb-3"
                 >
                     <span className="text-xl font-black text-gray-900">{result.itemName}</span>
-                    {result.item.type === 'number' && result.item.value && (
-                        <span className="text-blue-500 ml-2">×{result.item.value}</span>
-                    )}
                 </motion.div>
             </>
         );
@@ -124,7 +121,7 @@ const GachaModal: React.FC<GachaModalProps> = ({ isOpen, isDrawing, drawResult, 
                 >
                     <i className="fas fa-exclamation-triangle text-xs"></i>
                     <span className="text-xs font-bold uppercase tracking-widest">
-                        {result.eventId === 'time_half' ? '时间惩罚' : '道具损失'}
+                        {result.eventId === 'time_half' ? '时间惩罚' : result.eventId === 'dog_attack' ? '猎狗袭击' : '道具损失'}
                     </span>
                 </motion.div>
             </>

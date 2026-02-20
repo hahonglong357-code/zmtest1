@@ -5,10 +5,18 @@ import { FEATURES } from '../featureFlags';
 import { Translations } from '../i18n';
 import { playFusionSound, playSuccessSound, playErrorSound } from '../services/soundEffects';
 
+export interface ScorePopup {
+  id: string;
+  amount: number;
+  x: number;
+  y: number;
+}
+
 export function useGameCore(t: Translations) {
     const [gameState, setGameState] = useState<GameState | null>(null);
     const [isSynthesizing, setIsSynthesizing] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
+    const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
 
     const resetGame = useCallback(() => {
         const firstTarget = getTargetForAbsoluteIndex(0, 0);
@@ -28,7 +36,8 @@ export function useGameCore(t: Translations) {
             levelStartState: { grid: JSON.parse(JSON.stringify(initialGrid)), storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null), numbersUsed: 0 },
             tutorialStep: null,
             lastGachaThreshold: 0,
-            timePenaltyCount: 0
+            timePenaltyCount: 0,
+            dogAttackCount: 0
         });
         return firstTarget;
     }, []);
@@ -49,7 +58,8 @@ export function useGameCore(t: Translations) {
             storage: Array(GAME_PARAMS.STORAGE_SIZE).fill(null),
             levelStartState: null, tutorialStep: 0,
             lastGachaThreshold: 0,
-            timePenaltyCount: 0
+            timePenaltyCount: 0,
+            dogAttackCount: 0
         });
     }, []);
 
@@ -66,6 +76,15 @@ export function useGameCore(t: Translations) {
         if (!gameState || gameState.tutorialStep === null) return "";
         return t.tutorial_steps[gameState.tutorialStep] || "";
     }, [gameState?.tutorialStep, t]);
+
+    const triggerScorePopup = useCallback((amount: number, x: number, y: number) => {
+        const id = generateRandomId();
+        setScorePopups(prev => [...prev, { id, amount, x, y }]);
+        // 动画结束后移除
+        setTimeout(() => {
+            setScorePopups(prev => prev.filter(p => p.id !== id));
+        }, 1000);
+    }, []);
 
     const performSynthesis = useCallback((numPos1: Position, opPos: Position, numPos2: Position) => {
         if (!gameState) return;
@@ -98,6 +117,11 @@ export function useGameCore(t: Translations) {
             return;
         }
 
+        // 计算本回合得分（用于弹出动画）
+        const roundScore = result === gameState.currentTarget.value
+            ? (gameState.currentTarget.core_base * GAME_PARAMS.BASE_SCORE_MULTIPLIER) + (gameState.combo * GAME_PARAMS.COMBO_SCORE_BONUS)
+            : 0;
+
         setTimeout(() => {
             // 播放合成音效
             playFusionSound();
@@ -121,15 +145,17 @@ export function useGameCore(t: Translations) {
                 }
 
                 let processedGrid = newGrid.map((col, idx) => idx === 1 ? col : col.filter(cell => cell !== null));
-                let { totalTargetsCleared, currentTarget, nextTarget, score, combo, numbersUsed, totalDraws, timePenaltyCount } = prev;
+                let { totalTargetsCleared, currentTarget, nextTarget, score, combo, numbersUsed, totalDraws, timePenaltyCount, dogAttackCount } = prev;
                 numbersUsed += 2;
 
-                // 目标匹配时减少时间惩罚计数
+                // 目标匹配时减少惩罚计数
                 const newTimePenaltyCount = isMatch ? Math.max(0, timePenaltyCount - 1) : timePenaltyCount;
 
                 if (isMatch) {
-                    // 播放成功音效
+                    // 播放成功音效并触发分数弹出
                     playSuccessSound();
+                    // 触发分数弹出动画（位置在屏幕中心附近）
+                    triggerScorePopup(roundScore, 50, 50);
                     score += (prev.currentTarget.core_base * GAME_PARAMS.BASE_SCORE_MULTIPLIER) + (FEATURES.COMBO ? combo * GAME_PARAMS.COMBO_SCORE_BONUS : 0);
                     if (FEATURES.COMBO) combo += 1;
                     totalTargetsCleared += 1;
@@ -144,8 +170,34 @@ export function useGameCore(t: Translations) {
                     }
 
                     currentTarget = nextTarget; nextTarget = getTargetForAbsoluteIndex(totalTargetsCleared + 1, totalDraws);
+
+                    // 猎狗攻击：随机丢失一个数字（仅剩5个数字）
+                    const isDogAttack = dogAttackCount > 0;
+                    if (isDogAttack) {
+                        const leftColIdx = 0;
+                        const rightColIdx = 2;
+                        const leftCol = processedGrid[leftColIdx].filter(c => c?.type === 'number');
+                        const rightCol = processedGrid[rightColIdx].filter(c => c?.type === 'number');
+                        const allNums = [...leftCol, ...rightCol];
+
+                        // 随机移除一个数字
+                        if (allNums.length > 0) {
+                            const randomIdx = Math.floor(Math.random() * allNums.length);
+                            const cellToRemove = allNums[randomIdx];
+                            const colIdx = leftCol.includes(cellToRemove) ? leftColIdx : rightColIdx;
+                            const actualIdx = processedGrid[colIdx].findIndex(c => c?.id === cellToRemove?.id);
+                            if (actualIdx !== -1) processedGrid[colIdx][actualIdx] = null as any;
+
+                            // 过滤掉 null 值
+                            processedGrid[leftColIdx] = processedGrid[leftColIdx].filter(c => c !== null);
+                            processedGrid[rightColIdx] = processedGrid[rightColIdx].filter(c => c !== null);
+                        }
+                    }
+
                     processedGrid = processedGrid.map((col, colIdx) => {
                         if (colIdx === 1) return col;
+                        // 猎狗攻击后不填充数字，保持5个数字
+                        if (isDogAttack) return col;
                         const filled = [...col];
                         if (filled.length < NUM_HEIGHT) filled.unshift({ ...prev.previewCells[colIdx === 0 ? 0 : 2], id: generateRandomId() });
                         while (filled.length < NUM_HEIGHT) filled.unshift(createCell('number'));
@@ -174,8 +226,16 @@ export function useGameCore(t: Translations) {
                     }
                 }
 
+                // 正常情况下保存的 grid（6个数字），用于 resetLevel 恢复
+                const normalGridForReset = processedGrid.map((col, colIdx) => {
+                    if (colIdx === 1) return col; // 操作符列不变
+                    const filled = [...col];
+                    while (filled.length < NUM_HEIGHT) filled.unshift(createCell('number'));
+                    return filled;
+                });
+
                 const levelStartState = isMatch
-                    ? { grid: JSON.parse(JSON.stringify(processedGrid)), storage: JSON.parse(JSON.stringify(newStorage)), numbersUsed }
+                    ? { grid: JSON.parse(JSON.stringify(normalGridForReset)), storage: JSON.parse(JSON.stringify(newStorage)), numbersUsed }
                     : prev.levelStartState;
 
                 return {
@@ -187,12 +247,13 @@ export function useGameCore(t: Translations) {
                     totalTargetsCleared, numbersUsed,
                     levelStartState,
                     tutorialStep: prev.tutorialStep !== null ? prev.tutorialStep + 1 : null,
-                    timePenaltyCount: newTimePenaltyCount
+                    timePenaltyCount: newTimePenaltyCount,
+                    dogAttackCount: (isMatch && dogAttackCount > 0) ? 0 : dogAttackCount
                 };
             });
             setIsSynthesizing(false);
         }, 400);
-    }, [gameState, t, resetGame]);
+    }, [gameState, t, resetGame, triggerScorePopup]);
 
     const handleCellClick = useCallback((col: number, row: number) => {
         if (!gameState || isSynthesizing || gameState.isGameOver || gameState.isPaused) return;
@@ -245,7 +306,7 @@ export function useGameCore(t: Translations) {
         setGameState(prev => prev ? ({
             ...prev,
             grid: JSON.parse(JSON.stringify(prev.levelStartState!.grid)),
-            storage: JSON.parse(JSON.stringify(prev.levelStartState!.storage)),
+            // 不重置 storage，保留通过抽卡获得的道具
             numbersUsed: prev.levelStartState!.numbersUsed,
             selectedNum: null,
             selectedOp: null,
@@ -282,5 +343,6 @@ export function useGameCore(t: Translations) {
         handleCellClick, handleStorageNumberClick,
         resetLevel, useStorageItem,
         drawProgress, currentDiff,
+        scorePopups, triggerScorePopup,
     };
 }

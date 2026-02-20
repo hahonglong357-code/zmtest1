@@ -137,19 +137,19 @@ export const GAME_PARAMS = {
  * ==========================================
  */
 export const ITEM_CONFIG = {
-  TIMER_ADD_SECONDS: 15,
+  TIMER_ADD_SECONDS: 30,
   SCORE_PACK_POINTS: 500,
   DESCRIPTIONS: {
     number: "数字工具：存放在储物格中，可随时取用参与合成，帮你化解僵局。",
-    timer: `加时工具：点击即用，瞬间为你的挑战延长 ${15} 秒倒计时。`,
+    timer: `加时工具：点击即用，瞬间为你的挑战延长 ${30} 秒倒计时。`,
     refresh: "刷新令牌：当你觉得无计可施时，点击它来重置整个棋盘布局。",
-    score: `一袋子金币：直接获得 ${500} 额外积分，让你的排名更进一步。`
+    score: `500金币：直接获得 ${500} 额外积分，让你的排名更进一步。`
   } as Record<ItemType, string>,
   NAMES: {
     number: "数字工具",
     timer: "加时工具",
     refresh: "刷新令牌",
-    score: "一袋子金币"
+    score: "500金币"
   } as Record<ItemType, string>
 };
 
@@ -163,6 +163,7 @@ export const GACHA_NARRATIVES = {
   ITEM_INTROS: [
     "你和数字士兵搏斗，它掉落了",
     "在路上看到一个袋子，戳了戳，露出来一个",
+    "在路上钓了会鱼，钓上来一个",
     "数字士兵向你求饶，并给你"
   ] as string[],
   // 道具名称映射（用于文案组合）
@@ -170,7 +171,7 @@ export const GACHA_NARRATIVES = {
     number: "数字工具",
     timer: "加时工具",
     refresh: "刷新令牌",
-    score: "一袋子金币"
+    score: "500金币"
   } as Record<ItemType, string>
 };
 
@@ -198,6 +199,12 @@ export const GACHA_EVENTS: GachaEventConfig[] = [
     text: "你来的路上摔了一跤，道具都掉了你也不知道",
     icon: 'fa-tshirt',
     iconColor: 'text-rose-500'
+  },
+  {
+    id: 'dog_attack',
+    text: "来的路上碰到了数字猎狗，你不得不丢出一个数字保全自己",
+    icon: 'fa-dog',
+    iconColor: 'text-orange-500'
   }
 ];
 

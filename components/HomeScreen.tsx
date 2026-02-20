@@ -19,7 +19,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         <div className="absolute top-8 right-8 z-20 flex gap-2">
             <button
                 onClick={onShowTutorial}
-                className="px-4 py-2 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-300 shadow-sm active:scale-95 transition-all"
+                className="px-4 py-2 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-600 shadow-sm active:scale-95 transition-all"
                 title={t.tutorial_title}
             >
                 <i className="fas fa-question mr-1"></i>
@@ -27,7 +27,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
             <button
                 onClick={onLanguageToggle}
-                className="px-4 py-2 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-300 shadow-sm active:scale-95 transition-all"
+                className="px-4 py-2 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-600 shadow-sm active:scale-95 transition-all"
             >
                 {language === 'zh' ? 'EN' : '中文'}
             </button>

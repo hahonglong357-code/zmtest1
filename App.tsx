@@ -22,6 +22,7 @@ import GameOverModal from './components/GameOverModal';
 import LeaderboardOverlay from './components/LeaderboardOverlay';
 import TutorialOverlay from './components/TutorialOverlay';
 import Toast from './components/Toast';
+import ScorePopupOverlay from './components/ScorePopupOverlay';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'game'>('home');
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   const timer = useTimer({
     isActive: timerActive,
     duration: timerDuration,
+    resetKey: game.gameState?.totalTargetsCleared,
     onTimeUp: () => game.setGameState(g => g ? { ...g, isGameOver: true } : null)
   });
 
@@ -115,6 +117,7 @@ const App: React.FC = () => {
         let score = prev.score;
         let newStorage = [...prev.storage];
         let timePenaltyCount = prev.timePenaltyCount;
+        let newGrid = prev.grid.map(col => [...col]);
 
         if (result.resultType === 'item') {
           // 获得道具
@@ -132,6 +135,24 @@ const App: React.FC = () => {
           } else if (result.eventId === 'time_half') {
             // 时间惩罚：接下来两回合减半
             timePenaltyCount = 2;
+          } else if (result.eventId === 'dog_attack') {
+            // 猎狗攻击：立即丢失一个数字
+            // 从左侧或右侧随机移除一个数字
+            const leftCol = newGrid[0].filter(c => c?.type === 'number');
+            const rightCol = newGrid[2].filter(c => c?.type === 'number');
+            const allNums = [...leftCol, ...rightCol];
+
+            if (allNums.length > 0) {
+              const randomIdx = Math.floor(Math.random() * allNums.length);
+              const cellToRemove = allNums[randomIdx];
+              const colIdx = leftCol.includes(cellToRemove) ? 0 : 2;
+              const actualIdx = newGrid[colIdx].findIndex(c => c?.id === cellToRemove?.id);
+              if (actualIdx !== -1) newGrid[colIdx][actualIdx] = null as any;
+
+              // 过滤掉 null 值
+              newGrid[0] = newGrid[0].filter(c => c !== null);
+              newGrid[2] = newGrid[2].filter(c => c !== null);
+            }
           }
         }
 
@@ -140,7 +161,8 @@ const App: React.FC = () => {
           score,
           totalDraws: prev.totalDraws + 1,
           storage: newStorage,
-          timePenaltyCount
+          timePenaltyCount,
+          grid: newGrid
         };
       });
     });
@@ -267,6 +289,7 @@ const App: React.FC = () => {
       />
 
       {FEATURES.LEADERBOARD && <LeaderboardOverlay isOpen={showLeaderboard} leaderboard={leaderboard} onClose={() => setShowLeaderboard(false)} t={t} />}
+      <ScorePopupOverlay popups={game.scorePopups} />
       <Toast message={game.message} onDismiss={() => game.setMessage(null)} />
     </div>
   );
