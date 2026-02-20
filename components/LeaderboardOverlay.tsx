@@ -17,7 +17,7 @@ const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({ isOpen, leaderb
                     <h2 className="text-xl font-black tracking-tight text-gray-800">{t.global_leaderboard}</h2>
                     <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 active:scale-90"><i className="fas fa-xmark text-lg"></i></button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+                <div className="flex-1 overflow-y-auto p-6 space-y-3 no-scrollbar">
                     {leaderboard.length > 0 ? leaderboard.map((entry, i) => (
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}

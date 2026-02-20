@@ -156,13 +156,19 @@ const App: React.FC = () => {
           }
         }
 
+        // 更新 levelStartState 以保持重置后的数字数量一致
+        const newLevelStartState = result.eventId === 'dog_attack'
+          ? { ...prev.levelStartState!, grid: JSON.parse(JSON.stringify(newGrid)) }
+          : prev.levelStartState;
+
         return {
           ...prev,
           score,
           totalDraws: prev.totalDraws + 1,
           storage: newStorage,
           timePenaltyCount,
-          grid: newGrid
+          grid: newGrid,
+          levelStartState: newLevelStartState
         };
       });
     });
