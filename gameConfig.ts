@@ -8,18 +8,12 @@ import { TargetData, ItemType, Cell, Operator } from './types';
  * diff: 0=Easy, 1=Normal, 2=Hard, 3=Expert, 4=Master, 5=Legend
  */
 export const TARGET_CATALOG: TargetData[] = [
-  // LEVEL 0: EASY (20 numbers) - Highly composite and milestone numbers
+  // LEVEL 0: EASY (9 numbers) - Simple numbers <= 60
   { value: 12, diff: 0, core_base: 2 }, { value: 20, diff: 0, core_base: 2 },
   { value: 24, diff: 0, core_base: 2 }, { value: 30, diff: 0, core_base: 2 },
   { value: 36, diff: 0, core_base: 2 }, { value: 40, diff: 0, core_base: 2 },
   { value: 48, diff: 0, core_base: 2 }, { value: 50, diff: 0, core_base: 2 },
-  { value: 60, diff: 0, core_base: 2 }, { value: 72, diff: 0, core_base: 2 },
-  { value: 80, diff: 0, core_base: 2 }, { value: 84, diff: 0, core_base: 2 },
-  { value: 90, diff: 0, core_base: 2 }, { value: 100, diff: 0, core_base: 3 },
-  { value: 120, diff: 0, core_base: 3 }, { value: 140, diff: 0, core_base: 3 },
-  { value: 144, diff: 0, core_base: 3 }, { value: 150, diff: 0, core_base: 3 },
-  { value: 160, diff: 0, core_base: 3 }, { value: 180, diff: 0, core_base: 3 },
-  { value: 200, diff: 0, core_base: 3 },
+  { value: 60, diff: 0, core_base: 2 },
 
   // LEVEL 1: NORMAL (42 numbers) - Common composite numbers
   { value: 14, diff: 1, core_base: 4 }, { value: 15, diff: 1, core_base: 4 },
@@ -39,14 +33,9 @@ export const TARGET_CATALOG: TargetData[] = [
   { value: 66, diff: 1, core_base: 5 }, { value: 70, diff: 1, core_base: 5 },
   { value: 75, diff: 1, core_base: 5 }, { value: 77, diff: 1, core_base: 5 },
   { value: 78, diff: 1, core_base: 5 }, { value: 81, diff: 1, core_base: 5 },
-  { value: 85, diff: 1, core_base: 5 }, { value: 88, diff: 1, core_base: 5 },
-  { value: 91, diff: 1, core_base: 5 }, { value: 92, diff: 1, core_base: 5 },
-  { value: 95, diff: 1, core_base: 5 }, { value: 96, diff: 1, core_base: 5 },
-  { value: 98, diff: 1, core_base: 5 }, { value: 99, diff: 1, core_base: 5 },
+ 
 
   // LEVEL 2: HARD (34 numbers) - Small primes and trickier numbers < 100
-  { value: 11, diff: 2, core_base: 6 }, { value: 13, diff: 2, core_base: 6 },
-  { value: 17, diff: 2, core_base: 6 }, { value: 19, diff: 2, core_base: 6 },
   { value: 23, diff: 2, core_base: 6 }, { value: 29, diff: 2, core_base: 6 },
   { value: 31, diff: 2, core_base: 6 }, { value: 37, diff: 2, core_base: 6 },
   { value: 41, diff: 2, core_base: 6 }, { value: 43, diff: 2, core_base: 6 },
@@ -58,7 +47,7 @@ export const TARGET_CATALOG: TargetData[] = [
   { value: 69, diff: 2, core_base: 6 }, { value: 71, diff: 2, core_base: 6 },
   { value: 73, diff: 2, core_base: 6 }, { value: 74, diff: 2, core_base: 6 },
   { value: 76, diff: 2, core_base: 6 }, { value: 79, diff: 2, core_base: 6 },
-  { value: 82, diff: 2, core_base: 6 }, { value: 83, diff: 2, core_base: 6 },
+  { value: 85, diff: 2, core_base: 6 }, { value: 88, diff: 2, core_base: 6 },
   { value: 86, diff: 2, core_base: 6 }, { value: 87, diff: 2, core_base: 6 },
   { value: 89, diff: 2, core_base: 6 }, { value: 93, diff: 2, core_base: 6 },
   { value: 94, diff: 2, core_base: 6 }, { value: 97, diff: 2, core_base: 6 },
@@ -86,7 +75,7 @@ export const TARGET_CATALOG: TargetData[] = [
   { value: 154, diff: 3, core_base: 8 }, { value: 155, diff: 3, core_base: 8 },
   { value: 156, diff: 3, core_base: 8 }, { value: 158, diff: 3, core_base: 8 },
 
-  // LEVEL 4: MASTER (28 numbers) - Primes and complex composites 100-180
+   // LEVEL 4: MASTER (28 numbers) - Primes and complex composites 100-180
   { value: 101, diff: 4, core_base: 10 }, { value: 103, diff: 4, core_base: 10 },
   { value: 107, diff: 4, core_base: 10 }, { value: 109, diff: 4, core_base: 10 },
   { value: 113, diff: 4, core_base: 10 }, { value: 127, diff: 4, core_base: 10 },
@@ -164,6 +153,10 @@ export const GACHA_NARRATIVES = {
     "你和数字士兵搏斗，它掉落了",
     "在路上看到一个袋子，戳了戳，露出来一个",
     "在路上钓了会鱼，钓上来一个",
+    "你觉得太难，朝天上骂了几句，天上掉下来一个",
+    "你觉得太难，向天上拜了拜，天上掉下来一个",
+    "路上碰到熟人了，他有不少宝贝，给了你一个",
+    "路上碰到制作者了，打了他一顿，他口袋里有个",
     "数字士兵向你求饶，并给你"
   ] as string[],
   // 道具名称映射（用于文案组合）
@@ -213,7 +206,13 @@ export const GACHA_EVENTS: GachaEventConfig[] = [
  * GACHA POOLS - 抽卡奖池配置
  * ==========================================
  */
-export const GACHA_ITEM_POOL: ItemType[] = ['score', 'number', 'timer', 'refresh'];
+// 概率分布：number 35%, refresh 35%, timer 15%, score 15%
+export const GACHA_ITEM_POOL: ItemType[] = [
+  ...Array(35).fill('number'),
+  ...Array(30).fill('refresh'),
+  ...Array(15).fill('timer'),
+  ...Array(20).fill('score'),
+];
 
 /**
  * ==========================================
@@ -379,9 +378,9 @@ export type SequencePatternKey = keyof typeof SEQUENCE_PATTERNS;
  */
 export const SCORE_THRESHOLDS = {
   /** 困难序列解锁分数 */
-  HARD_UNLOCK: 3000,
+  HARD_UNLOCK: 5000,
   /** 专家序列解锁分数 */
-  EXPERT_UNLOCK: 8000,
+  EXPERT_UNLOCK: 15000,
 } as const;
 
 /**
@@ -392,13 +391,13 @@ export const SCORE_THRESHOLDS = {
  */
 export const getSequenceOrder = (currentScore: number): SequencePatternKey[] => {
   if (currentScore < SCORE_THRESHOLDS.HARD_UNLOCK) {
-    // 低于3000分：只有NORMAL
-    return ['NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL'];
+    // 低于5000分：仅NORMAL
+    return ['NORMAL'];
   } else if (currentScore < SCORE_THRESHOLDS.EXPERT_UNLOCK) {
-    // 3000-8000分：两个NORMAL一个HARD
+    // 5000-15000分：N,N,H
     return ['NORMAL', 'NORMAL', 'HARD'];
   } else {
-    // 8000分以上：NORMAL和HARD交替
+    // 15000分以上：N,H
     return ['NORMAL', 'HARD'];
   }
 };
@@ -409,7 +408,7 @@ export const getSequenceOrder = (currentScore: number): SequencePatternKey[] => 
  * ==========================================
  */
 class TargetGenerator {
-  private currentSequenceOrder: SequencePatternKey[] = ['NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL', 'NORMAL'];
+  private currentSequenceOrder: SequencePatternKey[] = ['NORMAL'];
   private sequenceIndex: number = 0;
 
   /** 设置当前分数，决定使用的序列（每个序列完成后调用） */
