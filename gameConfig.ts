@@ -9,11 +9,11 @@ import { TargetData, ItemType, Cell, Operator } from './types';
  */
 export const TARGET_CATALOG: TargetData[] = [
   // LEVEL 0: EASY (9 numbers) - Simple numbers <= 60
-  { value: 12, diff: 0, core_base: 2 }, { value: 20, diff: 0, core_base: 2 },
-  { value: 24, diff: 0, core_base: 2 }, { value: 30, diff: 0, core_base: 2 },
-  { value: 36, diff: 0, core_base: 2 }, { value: 40, diff: 0, core_base: 2 },
-  { value: 48, diff: 0, core_base: 2 }, { value: 50, diff: 0, core_base: 2 },
-  { value: 60, diff: 0, core_base: 2 },
+  { value: 12, diff: 0, core_base: 3 }, { value: 20, diff: 0, core_base: 3 },
+  { value: 24, diff: 0, core_base: 3 }, { value: 30, diff: 0, core_base: 3 },
+  { value: 36, diff: 0, core_base: 3 }, { value: 40, diff: 0, core_base: 3 },
+  { value: 48, diff: 0, core_base: 3 }, { value: 50, diff: 0, core_base: 3 },
+  { value: 60, diff: 0, core_base: 3 },
 
   // LEVEL 1: NORMAL (42 numbers) - Common composite numbers
   { value: 14, diff: 1, core_base: 4 }, { value: 15, diff: 1, core_base: 4 },
@@ -33,7 +33,7 @@ export const TARGET_CATALOG: TargetData[] = [
   { value: 66, diff: 1, core_base: 5 }, { value: 70, diff: 1, core_base: 5 },
   { value: 75, diff: 1, core_base: 5 }, { value: 77, diff: 1, core_base: 5 },
   { value: 78, diff: 1, core_base: 5 }, { value: 81, diff: 1, core_base: 5 },
- 
+
 
   // LEVEL 2: HARD (34 numbers) - Small primes and trickier numbers < 100
   { value: 23, diff: 2, core_base: 6 }, { value: 29, diff: 2, core_base: 6 },
@@ -75,7 +75,7 @@ export const TARGET_CATALOG: TargetData[] = [
   { value: 154, diff: 3, core_base: 8 }, { value: 155, diff: 3, core_base: 8 },
   { value: 156, diff: 3, core_base: 8 }, { value: 158, diff: 3, core_base: 8 },
 
-   // LEVEL 4: MASTER (28 numbers) - Primes and complex composites 100-180
+  // LEVEL 4: MASTER (28 numbers) - Primes and complex composites 100-180
   { value: 101, diff: 4, core_base: 10 }, { value: 103, diff: 4, core_base: 10 },
   { value: 107, diff: 4, core_base: 10 }, { value: 109, diff: 4, core_base: 10 },
   { value: 113, diff: 4, core_base: 10 }, { value: 127, diff: 4, core_base: 10 },
@@ -125,6 +125,23 @@ export const GAME_PARAMS = {
     INTERVAL: 5000,         // 分数间隔
     DECREASE_AMOUNT: 0.5,   // 每次减少的秒数
     MIN_MULTIPLIER: 14       // 最低时间倍率
+  },
+
+  // 得分与奖励配置
+  SCORE_REWARDS: {
+    COMBO_BONUS: 20,         // 每层连击奖励分数
+    MAX_COMBO_BONUS: 160,    // 连击奖励上限
+    SPEED_MULTIPLIERS: [
+      { threshold: 0.7, multiplier: 1.5, label: 'SUPER FAST' }, // 剩余时间 > 70%
+      { threshold: 0.4, multiplier: 1.2, label: 'FAST' },       // 剩余时间 > 40%
+      { threshold: 0, multiplier: 1.0, label: '' }              // 其他
+    ]
+  },
+
+  // 时间限制配置加速逻辑
+  TIMER_LIMITS: {
+    GLOBAL_MAX: 999,        // 全局最大时间上限（防止无限延时）
+    DEFAULT_MAX: 100,       // 默认/教程期间最大时间
   }
 };
 
@@ -156,6 +173,66 @@ export const getDifficultyLevel = (score: number): number => {
   const { START_SCORE, INTERVAL, MAX_LEVEL } = DIFFICULTY_BANNER_CONFIG;
   if (score < START_SCORE) return 0;
   return Math.min(Math.floor((score - START_SCORE) / INTERVAL) + 1, MAX_LEVEL);
+};
+
+/**
+ * ==========================================
+ * DYNAMIC DIFFICULTY CONFIG - 动态难度配置
+ * ==========================================
+ * 根据玩家持有的道具数量动态调整难度
+ */
+export const DYNAMIC_DIFFICULTY_CONFIG = {
+  START_SCORE: 10000,          // 开始检查难度的分数
+  CHECK_INTERVAL: 3000,         // 每5000分检查一次
+
+  // 难度等级参数
+  BASE_TIMER_MULTIPLIER: 17,    // 默认时间倍率（最低难度）
+  BASE_ITEM_CHANCE: 0.1,        // 默认抽卡概率（最低难度）
+  TIMER_DECREASE: 0.5,          // 每增加1级难度，时间倍率减少0.5
+  CHANCE_DECREASE: 0.05,        // 每增加1级难度，抽卡概率降低0.05
+  MIN_TIMER_MULTIPLIER: 13,     // 最低时间倍率
+  MIN_ITEM_CHANCE: 0.5,         // 最低抽卡概率
+  MAX_LEVEL: 8,                 // 最大难度等级
+
+  // 道具数量阈值
+  ITEM_COUNT_THRESHOLD_HIGH: 3,     // ≥3个道具
+  ITEM_COUNT_THRESHOLD_MID_HIGH: 2, // =2个道具
+  ITEM_COUNT_THRESHOLD_MID: 1,     // =1个道具
+
+  // 概率配置：[增加, 维持, 降低] 的概率分布
+  PROBS: {
+    HIGH: [0.9, 0.1, 0.0],     // ≥3个道具
+    MID_HIGH: [0.6, 0.4, 0.0], // =2个道具
+    MID: [0.0, 0.3, 0.7],      // =1个道具
+    ZERO: [0.0, 0.2, 0.8]      // =0个道具
+  }
+};
+
+/** 根据难度等级获取时间倍率 */
+export const getTimerMultiplierByLevel = (level: number): number => {
+  const { BASE_TIMER_MULTIPLIER, TIMER_DECREASE, MIN_TIMER_MULTIPLIER } = DYNAMIC_DIFFICULTY_CONFIG;
+  return Math.max(BASE_TIMER_MULTIPLIER - (level * TIMER_DECREASE), MIN_TIMER_MULTIPLIER);
+};
+
+/** 根据难度等级获取抽卡概率 */
+export const getItemChanceByLevel = (level: number): number => {
+  const { BASE_ITEM_CHANCE, CHANCE_DECREASE, MIN_ITEM_CHANCE } = DYNAMIC_DIFFICULTY_CONFIG;
+  return Math.max(BASE_ITEM_CHANCE - (level * CHANCE_DECREASE), MIN_ITEM_CHANCE);
+};
+
+/** 判断是否需要检查难度（分数是否跨过阈值） */
+export const shouldCheckDifficulty = (prevScore: number, currentScore: number): boolean => {
+  const { START_SCORE, CHECK_INTERVAL } = DYNAMIC_DIFFICULTY_CONFIG;
+  const prevThreshold = Math.floor(prevScore / CHECK_INTERVAL);
+  const currentThreshold = Math.floor(currentScore / CHECK_INTERVAL);
+  return currentScore >= START_SCORE && currentThreshold > prevThreshold;
+};
+
+/** 计算当前基于分数的难度等级（用于目标序列，不用于时间和抽卡） */
+export const getDifficultyLevelByScore = (score: number): number => {
+  const { START_SCORE, CHECK_INTERVAL } = DYNAMIC_DIFFICULTY_CONFIG;
+  if (score < START_SCORE) return 0;
+  return Math.floor((score - START_SCORE) / CHECK_INTERVAL);
 };
 
 /**
@@ -236,6 +313,12 @@ export const GACHA_EVENTS: GachaEventConfig[] = [
     text: "来的路上碰到了数字猎狗，你不得不丢出一个数字保全自己",
     icon: 'fa-dog',
     iconColor: 'text-orange-500'
+  },
+  {
+    id: 'score_double',
+    text: "摸了摸一件路边的衣服，是双倍金币卡！",
+    icon: 'fa-coins',
+    iconColor: 'text-yellow-500'
   }
 ];
 
@@ -246,43 +329,12 @@ export const GACHA_EVENTS: GachaEventConfig[] = [
  */
 // 概率分布：number 35%, refresh 35%, timer 15%, score 15%
 export const GACHA_ITEM_POOL: ItemType[] = [
-  ...Array(35).fill('number'),
-  ...Array(35).fill('refresh'),
-  ...Array(10).fill('timer'),
-  ...Array(20).fill('score'),
+  ...Array(30).fill('number'),
+  ...Array(30).fill('refresh'),
+  ...Array(15).fill('timer'),
+  ...Array(25).fill('score'),
 ];
 
-/**
- * ==========================================
- * GACHA CONFIG - 抽卡概率配置
- * ==========================================
- */
-export const GACHA_CONFIG = {
-  /** 基础获得道具的概率 */
-  BASE_ITEM_CHANCE: 0.8,
-  /** 难度增加分数阈值 */
-  DIFFICULTY_SCORE_THRESHOLD: 20000,
-  /** 每增加多少分触发一次难度提升 */
-  DIFFICULTY_INCREMENT_INTERVAL: 5000,
-  /** 每次难度提升减少多少道具概率 */
-  DIFFICULTY_PENALTY: 0.05,
-  /** 最低道具概率（封顶） */
-  MIN_ITEM_CHANCE: 0.5,
-};
-
-/** 获取当前分数对应的道具获得概率 */
-export const getItemChance = (score: number): number => {
-  const { BASE_ITEM_CHANCE, DIFFICULTY_SCORE_THRESHOLD, DIFFICULTY_INCREMENT_INTERVAL, DIFFICULTY_PENALTY, MIN_ITEM_CHANCE } = GACHA_CONFIG;
-
-  if (score < DIFFICULTY_SCORE_THRESHOLD) {
-    return BASE_ITEM_CHANCE;
-  }
-
-  const increments = Math.floor((score - DIFFICULTY_SCORE_THRESHOLD) / DIFFICULTY_INCREMENT_INTERVAL);
-  const newChance = BASE_ITEM_CHANCE - (increments * DIFFICULTY_PENALTY);
-
-  return Math.max(newChance, MIN_ITEM_CHANCE);
-};
 
 /**
  * ==========================================

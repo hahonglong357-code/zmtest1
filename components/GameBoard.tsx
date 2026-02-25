@@ -57,7 +57,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onCellClick }) => {
     };
 
     return (
-        <div className={`relative grid grid-cols-3 gap-3 px-1 transition-all duration-500 ${gameState.tutorialStep === 3 ? 'z-[1001] bg-white/20 p-4 rounded-3xl ring-4 ring-blue-400 scale-105 shadow-2xl' : ''}`}>
+        <div className={`relative grid grid-cols-3 gap-2 px-1 transition-all duration-500 ${gameState.tutorialStep === 3 ? 'z-[1001] bg-white/20 p-4 rounded-3xl ring-4 ring-blue-400 scale-105 shadow-2xl' : ''}`}>
             {/* 粒子效果 */}
             <AnimatePresence>
                 {particles.map(p => (
@@ -66,7 +66,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onCellClick }) => {
             </AnimatePresence>
 
             {gameState.grid.map((column, colIdx) => (
-                <div key={`col-${colIdx}`} className="flex flex-col gap-2.5 justify-center">
+                <div key={`col-${colIdx}`} className="flex flex-col gap-2 justify-center">
                     {column.map((cell: Cell, rowIdx: number) => {
                         if (!cell) return null;
                         const isSelected = (gameState.selectedNum?.source === 'grid' && gameState.selectedNum?.col === colIdx && gameState.selectedNum?.row === rowIdx) || (gameState.selectedOp?.col === colIdx && gameState.selectedOp?.row === rowIdx);
@@ -93,7 +93,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onCellClick }) => {
                                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => handleClick(colIdx, rowIdx, cell)}
-                                className={`relative h-14 sm:h-18 w-full flex items-center justify-center rounded-[20px] text-xl font-bold ios-shadow ${cell.type === 'operator' ? 'bg-orange-50/80 text-orange-500 border border-orange-100' : 'bg-white text-black border border-white/50'} ${isSelected ? 'ring-4 ring-blue-500/30 !text-white !border-blue-600 shadow-lg' : ''} ${isGuided ? 'z-[1001] ring-4 ring-blue-500 animate-pulse !shadow-2xl' : ''}`}
+                                className={`relative h-12 sm:h-16 w-full flex items-center justify-center rounded-[18px] text-lg font-bold ios-shadow ${cell.type === 'operator' ? 'bg-orange-50/80 text-orange-500 border border-orange-100' : 'bg-white text-black border border-white/50'} ${isSelected ? 'ring-4 ring-blue-500/30 !text-white !border-blue-600 shadow-lg' : ''} ${isGuided ? 'z-[1001] ring-4 ring-blue-500 animate-pulse !shadow-2xl' : ''}`}
                             >
                                 {cell.value}
                             </motion.button>

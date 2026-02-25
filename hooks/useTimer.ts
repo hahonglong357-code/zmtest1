@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { GAME_PARAMS } from '../gameConfig';
 
 interface UseTimerOptions {
     isActive: boolean;
@@ -9,8 +10,8 @@ interface UseTimerOptions {
 }
 
 export function useTimer({ isActive, duration, onTimeUp, resetKey, initialTimeLeft }: UseTimerOptions) {
-    // 确保初始时间不超过duration，避免倒计时停滞
-    const initialTime = initialTimeLeft ? Math.min(initialTimeLeft, duration) : duration;
+    // 确保初始时间不超过全局最大值
+    const initialTime = initialTimeLeft ? Math.min(initialTimeLeft, GAME_PARAMS.TIMER_LIMITS.GLOBAL_MAX) : duration;
     const [timeLeft, setTimeLeft] = useState(initialTime);
     const prevResetKeyRef = useRef<number | undefined>(resetKey);
     const isRunningRef = useRef(false);
@@ -72,8 +73,8 @@ export function useTimer({ isActive, duration, onTimeUp, resetKey, initialTimeLe
     const progress = duration > 0 ? (timeLeft / duration) * 100 : 0;
 
     const addTime = useCallback((seconds: number) => {
-        setTimeLeft(prev => Math.min(duration, prev + seconds));
-    }, [duration]);
+        setTimeLeft(prev => Math.min(GAME_PARAMS.TIMER_LIMITS.GLOBAL_MAX, prev + seconds));
+    }, []);
 
     return { timeLeft, progress, addTime };
 }

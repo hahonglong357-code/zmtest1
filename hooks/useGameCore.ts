@@ -1,15 +1,17 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Cell, Operator, Position, GameState } from '../types';
-import { GAME_PARAMS, DIFF_UI, NUM_HEIGHT, OP_HEIGHT, OPERATORS, createCell, generateRandomId, getTargetForAbsoluteIndex, setTargetScore, SEQUENCE_PATTERNS, getSequenceOrder, getRandomEasyTarget, getDifficultyLevel } from '../gameConfig';
+import { GAME_PARAMS, DIFF_UI, NUM_HEIGHT, OP_HEIGHT, OPERATORS, createCell, generateRandomId, getTargetForAbsoluteIndex, setTargetScore, SEQUENCE_PATTERNS, getSequenceOrder, getRandomEasyTarget, getDifficultyLevel, DYNAMIC_DIFFICULTY_CONFIG, getTimerMultiplierByLevel, getItemChanceByLevel } from '../gameConfig';
 import { FEATURES } from '../featureFlags';
 import { Translations } from '../i18n';
 import { playFusionSound, playSuccessSound, playErrorSound } from '../services/soundEffects';
 
 export interface ScorePopup {
-  id: string;
-  amount: number;
-  x: number;
-  y: number;
+    id: string;
+    amount: number | string; // 支持显示倍率文本如 "x1.5"
+    type: 'base' | 'combo' | 'perfect' | 'speed';
+    x: number;
+    y: number;
+    label?: string;
 }
 
 export function useGameCore(t: Translations) {
@@ -17,8 +19,20 @@ export function useGameCore(t: Translations) {
     const [isSynthesizing, setIsSynthesizing] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
+    // 动态难度等级状态
+    const [difficultyLevel, setDifficultyLevel] = useState(0);
+    const [lastDifficultyCheckScore, setLastDifficultyCheckScore] = useState(0);
+
+    // 调试用：打印难度等级变化
+    useEffect(() => {
+        // console.log(`[难度等级变化] 当前: ${difficultyLevel}, 抽卡概率: ${(0.8 - difficultyLevel * 0.05).toFixed(2)}`);
+    }, [difficultyLevel]);
 
     const resetGame = useCallback(() => {
+        // 重置动态难度等级
+        setDifficultyLevel(0);
+        setLastDifficultyCheckScore(0);
+
         const firstTarget = getTargetForAbsoluteIndex(0, 0);
         const initialGrid = [
             Array.from({ length: NUM_HEIGHT }, () => createCell('number')),
@@ -39,7 +53,8 @@ export function useGameCore(t: Translations) {
             timePenaltyCount: 0,
             dogAttackCount: 0,
             lastDifficultyLevel: 0,
-            timeLeft: 100 // 初始时间
+            doubleScoreCount: 0,
+            timeLeft: GAME_PARAMS.TIMER_LIMITS.DEFAULT_MAX // 初始时间
         });
         return firstTarget;
     }, []);
@@ -63,7 +78,8 @@ export function useGameCore(t: Translations) {
             timePenaltyCount: 0,
             dogAttackCount: 0,
             lastDifficultyLevel: 0,
-            timeLeft: 100 // 教程初始时间
+            doubleScoreCount: 0,
+            timeLeft: GAME_PARAMS.TIMER_LIMITS.DEFAULT_MAX // 教程初始时间
         });
     }, []);
 
@@ -81,16 +97,16 @@ export function useGameCore(t: Translations) {
         return t.tutorial_steps[gameState.tutorialStep] || "";
     }, [gameState?.tutorialStep, t]);
 
-    const triggerScorePopup = useCallback((amount: number, x: number, y: number) => {
+    const triggerScorePopup = useCallback((amount: number | string, x: number, y: number, type: ScorePopup['type'], label?: string) => {
         const id = generateRandomId();
-        setScorePopups(prev => [...prev, { id, amount, x, y }]);
+        setScorePopups(prev => [...prev, { id, amount, x, y, type, label }]);
         // 动画结束后移除
         setTimeout(() => {
             setScorePopups(prev => prev.filter(p => p.id !== id));
-        }, 1000);
+        }, 1200);
     }, []);
 
-    const performSynthesis = useCallback((numPos1: Position, opPos: Position, numPos2: Position) => {
+    const performSynthesis = useCallback((numPos1: Position, opPos: Position, numPos2: Position, timeLeft?: number, maxTime?: number) => {
         if (!gameState) return;
         setIsSynthesizing(true);
         const getVal = (p: Position) => p.source === 'grid' ? gameState.grid[p.col][p.row].value as number : gameState.storage[p.storageIndex!]?.value as number;
@@ -122,9 +138,7 @@ export function useGameCore(t: Translations) {
         }
 
         // 计算本回合得分（用于弹出动画）
-        const roundScore = result === gameState.currentTarget.value
-            ? (gameState.currentTarget.core_base * GAME_PARAMS.BASE_SCORE_MULTIPLIER) + (gameState.combo * GAME_PARAMS.COMBO_SCORE_BONUS)
-            : 0;
+        // 同步得分计算移动到 setTimeout 内部
 
         setTimeout(() => {
             // 播放合成音效
@@ -149,21 +163,45 @@ export function useGameCore(t: Translations) {
                 }
 
                 let processedGrid = newGrid.map((col, idx) => idx === 1 ? col : col.filter(cell => cell !== null));
-                let { totalTargetsCleared, currentTarget, nextTarget, score, combo, numbersUsed, totalDraws, timePenaltyCount, dogAttackCount } = prev;
+                let { totalTargetsCleared, currentTarget, nextTarget, score, combo, numbersUsed, totalDraws, timePenaltyCount, dogAttackCount, doubleScoreCount } = prev;
                 numbersUsed += 2;
 
-                // 目标匹配时减少惩罚计数
+                // 目标匹配时减少惩罚计数和翻倍计数
                 const newTimePenaltyCount = isMatch ? Math.max(0, timePenaltyCount - 1) : timePenaltyCount;
+                const newDoubleScoreCount = isMatch ? Math.max(0, doubleScoreCount - 1) : doubleScoreCount;
 
                 if (isMatch) {
                     // 播放成功音效并触发分数弹出
                     playSuccessSound();
-                    // 触发分数弹出动画（位置在屏幕中心附近）
-                    triggerScorePopup(roundScore, 50, 50);
-                    // 连击加成最高160分（8次连击后不再增加）
-                    const maxComboBonus = 160;
-                    const comboBonus = FEATURES.COMBO ? Math.min(combo * GAME_PARAMS.COMBO_SCORE_BONUS, maxComboBonus) : 0;
-                    score += (prev.currentTarget.core_base * GAME_PARAMS.BASE_SCORE_MULTIPLIER) + comboBonus;
+                    // 1. 基础分 (向左移动至红框区域，保持左对齐)
+                    const basePoints = prev.currentTarget.core_base * GAME_PARAMS.BASE_SCORE_MULTIPLIER;
+                    triggerScorePopup(basePoints, 66, 14, 'base');
+
+                    // 2. 连击分 (对齐同一个左起点)
+                    const comboBonus = FEATURES.COMBO ? Math.min(combo * GAME_PARAMS.SCORE_REWARDS.COMBO_BONUS, GAME_PARAMS.SCORE_REWARDS.MAX_COMBO_BONUS) : 0;
+                    if (comboBonus > 0) {
+                        setTimeout(() => triggerScorePopup(comboBonus, 66, 18, 'combo', `COMBO x${combo}`), 180);
+                    }
+
+                    // 3. 速度倍率计算 (不在棋盘弹出，仅计算结果)
+                    let speedMult = 1.0;
+                    if (timeLeft && maxTime) {
+                        const ratio = timeLeft / maxTime;
+                        for (const config of GAME_PARAMS.SCORE_REWARDS.SPEED_MULTIPLIERS) {
+                            if (ratio >= config.threshold) {
+                                speedMult = config.multiplier;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 4. 翻倍道具
+                    const rewardDoubler = doubleScoreCount > 0 ? 2 : 1;
+
+                    // 计算汇总得分 (移除 PerfectBonus)
+                    const earnScore = Math.floor((basePoints + comboBonus) * speedMult * rewardDoubler);
+                    score += earnScore;
+
                     if (FEATURES.COMBO) combo += 1;
                     totalTargetsCleared += 1;
 
@@ -267,16 +305,17 @@ export function useGameCore(t: Translations) {
                     levelStartState,
                     tutorialStep: prev.tutorialStep !== null ? prev.tutorialStep + 1 : null,
                     timePenaltyCount: newTimePenaltyCount,
+                    doubleScoreCount: newDoubleScoreCount,
                     dogAttackCount: (isMatch && dogAttackCount > 0) ? 0 : dogAttackCount,
                     lastDifficultyLevel: isMatch ? getDifficultyLevel(score) : prev.lastDifficultyLevel,
-                    timeLeft: isMatch ? 100 : prev.timeLeft // 目标匹配时重置时间
+                    timeLeft: isMatch ? (currentTarget.core_base * getTimerMultiplierByLevel(difficultyLevel)) : prev.timeLeft // 目标匹配时根据新目标重置时间
                 };
             });
             setIsSynthesizing(false);
         }, 400);
     }, [gameState, t, resetGame, triggerScorePopup]);
 
-    const handleCellClick = useCallback((col: number, row: number) => {
+    const handleCellClick = useCallback((col: number, row: number, timeLeft?: number, maxTime?: number) => {
         if (!gameState || isSynthesizing || gameState.isGameOver || gameState.isPaused) return;
 
         if (gameState.tutorialStep !== null) {
@@ -296,7 +335,7 @@ export function useGameCore(t: Translations) {
                 return;
             }
             if (gameState.selectedNum && gameState.selectedOp) {
-                performSynthesis(gameState.selectedNum, gameState.selectedOp, { col, row, source: 'grid' });
+                performSynthesis(gameState.selectedNum, gameState.selectedOp, { col, row, source: 'grid' }, timeLeft, maxTime);
                 return;
             }
             setGameState(prev => prev ? ({ ...prev, selectedNum: { col, row, source: 'grid' }, tutorialStep: prev.tutorialStep !== null ? prev.tutorialStep + 1 : null }) : null);
@@ -306,7 +345,7 @@ export function useGameCore(t: Translations) {
         }
     }, [gameState, isSynthesizing, performSynthesis]);
 
-    const handleStorageNumberClick = useCallback((index: number) => {
+    const handleStorageNumberClick = useCallback((index: number, timeLeft?: number, maxTime?: number) => {
         if (!gameState) return;
         const item = gameState.storage[index];
         if (!item || item.type !== 'number') return;
@@ -316,7 +355,7 @@ export function useGameCore(t: Translations) {
             return;
         }
         if (gameState.selectedNum && gameState.selectedOp) {
-            performSynthesis(gameState.selectedNum, gameState.selectedOp, { col: -1, row: -1, source: 'storage', storageIndex: index });
+            performSynthesis(gameState.selectedNum, gameState.selectedOp, { col: -1, row: -1, source: 'storage', storageIndex: index }, timeLeft, maxTime);
             return;
         }
         setGameState(p => p ? { ...p, selectedNum: { col: -1, row: -1, source: 'storage', storageIndex: index } } : null);
@@ -376,6 +415,79 @@ export function useGameCore(t: Translations) {
         });
     }, []);
 
+    // 计算当前持有的数字工具+刷新令牌数量
+    const getItemCount = useCallback((): number => {
+        if (!gameState) return 0;
+        return gameState.storage.filter(
+            item => item && (item.type === 'number' || item.type === 'refresh')
+        ).length;
+    }, [gameState]);
+
+    // 动态难度检查函数
+    const checkDynamicDifficulty = useCallback((prevScore: number, currentScore: number) => {
+        const { START_SCORE, CHECK_INTERVAL, ITEM_COUNT_THRESHOLD_HIGH, ITEM_COUNT_THRESHOLD_MID_HIGH,
+            ITEM_COUNT_THRESHOLD_MID, PROBS, MAX_LEVEL } = DYNAMIC_DIFFICULTY_CONFIG;
+
+        // 检查分数是否达到开始检查的阈值
+        if (currentScore < START_SCORE) {
+            // console.log(`[难度检查跳过] 分数尚未达标: ${currentScore} < ${START_SCORE}`);
+            return; // 分数还没达到起始值
+        }
+
+        // 检查是否跨过了CHECK_INTERVAL的增量
+        const prevCheckPoint = Math.floor((prevScore - START_SCORE) / CHECK_INTERVAL);
+        const currentCheckPoint = Math.floor((currentScore - START_SCORE) / CHECK_INTERVAL);
+
+        if (currentCheckPoint <= prevCheckPoint) {
+            // console.log(`[难度检查跳过] 未跨越增量点: ${prevScore} -> ${currentScore}`);
+            return; // 没有跨过新的检查点
+        }
+
+        const itemCount = getItemCount();
+        const currentLevel = difficultyLevel;
+        const rand = Math.random();
+
+        // 确定使用的概率配置
+        let probConfig: number[];
+        let countDesc: string;
+        if (itemCount >= ITEM_COUNT_THRESHOLD_HIGH) {
+            probConfig = PROBS.HIGH;
+            countDesc = `>=${ITEM_COUNT_THRESHOLD_HIGH}`;
+        } else if (itemCount === ITEM_COUNT_THRESHOLD_MID_HIGH) {
+            probConfig = PROBS.MID_HIGH;
+            countDesc = `=${ITEM_COUNT_THRESHOLD_MID_HIGH}`;
+        } else if (itemCount === ITEM_COUNT_THRESHOLD_MID) {
+            probConfig = PROBS.MID;
+            countDesc = `=${ITEM_COUNT_THRESHOLD_MID}`;
+        } else {
+            probConfig = PROBS.ZERO;
+            countDesc = `0`;
+        }
+
+        const [pIncrease, pMaintain, _pDecrease] = probConfig;
+        let newLevel = currentLevel;
+        let action = '维持';
+
+        if (rand < pIncrease) {
+            newLevel = Math.min(MAX_LEVEL, currentLevel + 1);
+            action = '增加';
+        } else if (rand < pIncrease + pMaintain) {
+            newLevel = currentLevel;
+            action = '维持';
+        } else {
+            newLevel = Math.max(0, currentLevel - 1);
+            action = '降低';
+        }
+
+        // console.log(`[动态难度调整判定] 道具数: ${itemCount}(${countDesc}), 概率分布[加,平,降]: [${probConfig}], 随机数: ${rand.toFixed(2)}, 结果: ${action}, 等级: ${currentLevel} -> ${newLevel}`);
+
+        if (newLevel !== currentLevel) {
+            setDifficultyLevel(newLevel);
+        }
+
+        setLastDifficultyCheckScore(currentScore);
+    }, [difficultyLevel, getItemCount]);
+
     const drawProgress = useMemo(() => {
         if (!gameState) return 0;
         // 基于完成的目标数量计算进度，每完成6个目标触发一次抽卡
@@ -388,6 +500,15 @@ export function useGameCore(t: Translations) {
         return DIFF_UI[gameState.currentTarget.diff] || null;
     }, [gameState?.currentTarget.diff]);
 
+    // 监听分数变化，检查是否需要调整动态难度
+    const prevScoreRef = useRef(0);
+    useEffect(() => {
+        if (gameState && gameState.score > prevScoreRef.current) {
+            checkDynamicDifficulty(prevScoreRef.current, gameState.score);
+        }
+        prevScoreRef.current = gameState?.score || 0;
+    }, [gameState?.score, checkDynamicDifficulty]);
+
     return {
         gameState, setGameState,
         isSynthesizing,
@@ -397,5 +518,6 @@ export function useGameCore(t: Translations) {
         resetLevel, useStorageItem, refreshTarget,
         drawProgress, currentDiff,
         scorePopups, triggerScorePopup,
+        difficultyLevel, checkDynamicDifficulty,
     };
 }

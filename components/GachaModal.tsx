@@ -119,9 +119,11 @@ const GachaModal: React.FC<GachaModalProps> = ({ isOpen, isDrawing, drawResult, 
                     transition={{ delay: 0.4 }}
                     className="flex items-center gap-2 text-amber-600"
                 >
-                    <i className="fas fa-exclamation-triangle text-xs"></i>
+                    <i className={`fas ${result.eventId === 'score_double' ? 'fa-star' : 'fa-exclamation-triangle'} text-xs`}></i>
                     <span className="text-xs font-bold uppercase tracking-widest">
-                        {result.eventId === 'time_half' ? '时间惩罚' : result.eventId === 'dog_attack' ? '猎狗袭击' : '道具损失'}
+                        {result.eventId === 'time_half' ? '时间惩罚' :
+                            result.eventId === 'dog_attack' ? '猎狗袭击' :
+                                result.eventId === 'score_double' ? '3局双倍积分！' : '道具损失'}
                     </span>
                 </motion.div>
             </>

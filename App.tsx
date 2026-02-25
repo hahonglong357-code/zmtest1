@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { FEATURES } from './featureFlags';
 import { TRANSLATIONS, Language } from './i18n';
-import { GAME_PARAMS, ITEM_CONFIG, getTimerMultiplier, DIFFICULTY_BANNER_CONFIG } from './gameConfig';
+import { GAME_PARAMS, ITEM_CONFIG, getTimerMultiplierByLevel, getItemChanceByLevel, DIFFICULTY_BANNER_CONFIG } from './gameConfig';
 import { userAnalytics } from './services/userAnalytics';
 
 // Hooks
@@ -47,10 +47,11 @@ const App: React.FC = () => {
 
   // 计算计时器时长和激活状态
   const currentScore = game.gameState?.score || 0;
-  const currentTimerMultiplier = getTimerMultiplier(currentScore);
+  const currentDifficultyLevel = game.difficultyLevel || 0;
+  const currentTimerMultiplier = getTimerMultiplierByLevel(currentDifficultyLevel);
   const timerDuration = (game.gameState && game.gameState.currentTarget && game.gameState.tutorialStep === null)
     ? game.gameState.currentTarget.core_base * currentTimerMultiplier * (game.gameState.timePenaltyCount > 0 ? 0.5 : 1)
-    : 100; // 教程期间或无目标时固定100秒
+    : GAME_PARAMS.TIMER_LIMITS.DEFAULT_MAX; // 教程期间或无目标时使用配置值
 
   // 简化计时器激活条件，确保游戏开始后立即激活
   const timerActive = FEATURES.TIMER && !!game.gameState && !game.gameState.isGameOver && !game.gameState.isPaused &&
@@ -59,7 +60,7 @@ const App: React.FC = () => {
   // 计算有效的剩余时间
   // 优先级：游戏状态中的时间 > 保存的游戏状态中的时间 > 基于目标难度计算的时间
   const effectiveTimeLeft = game.gameState?.timeLeft || savedGameState?.timeLeft || timerDuration;
-  
+
   // 直接在顶层调用useTimer Hook，遵循React的Hook规则
   const timer = useTimer({
     isActive: timerActive,
@@ -71,7 +72,7 @@ const App: React.FC = () => {
       game.setGameState(g => g ? { ...g, isGameOver: true } : null);
     }
   });
-  
+
   // 简化时间管理，只在返回主页时保存时间
   // 避免实时同步导致的性能问题和状态冲突
   const handleSaveTimeBeforeExit = () => {
@@ -116,7 +117,7 @@ const App: React.FC = () => {
     if (savedHighScore) setPersonalHighScore(parseInt(savedHighScore, 10));
     const savedUsername = localStorage.getItem('last_username');
     if (savedUsername) setUsername(savedUsername);
-    
+
     // Load saved game state from localStorage
     const savedGame = localStorage.getItem('saved_game_state');
     if (savedGame) {
@@ -129,7 +130,7 @@ const App: React.FC = () => {
       }
     }
   }, []);
-  
+
   // Save game state to localStorage when it changes
   useEffect(() => {
     if (game.gameState && !game.gameState.isGameOver) {
@@ -145,13 +146,20 @@ const App: React.FC = () => {
       !gacha.isOpen && game.gameState.tutorialStep === null) {
       const lastHandled = game.gameState.lastGachaThreshold || 0;
       if (game.gameState.totalTargetsCleared > lastHandled) {
-        if (game.gameState.storage.some(s => s === null)) {
-          game.setGameState(prev => prev ? ({ ...prev, lastGachaThreshold: prev.totalTargetsCleared }) : null);
-          gacha.setIsOpen(true);
-        }
+        // 立即标记已处理，防止重复触发
+        game.setGameState(prev => prev ? ({ ...prev, lastGachaThreshold: prev.totalTargetsCleared }) : null);
+
+        // 延迟 1200ms 弹出抽卡，让分数反馈和纸屑特效先播放完
+        const timer = setTimeout(() => {
+          // 再次检查确认格子未满且弹窗未开启
+          if (!gacha.isOpen && game.gameState && game.gameState.storage.some(s => s === null)) {
+            gacha.setIsOpen(true);
+          }
+        }, 1200);
+        return () => clearTimeout(timer);
       }
     }
-  }, [game.gameState?.totalTargetsCleared, gacha.isOpen, game.gameState?.tutorialStep]);
+  }, [game.gameState?.totalTargetsCleared, gacha.isOpen, game.gameState?.tutorialStep, game.gameState?.storage, game.setGameState, gacha.setIsOpen]);
 
   // Update high score
   const updateHighScore = (score: number) => {
@@ -168,7 +176,7 @@ const App: React.FC = () => {
     if (!item) return;
 
     if (item.type === 'number') {
-      game.handleStorageNumberClick(index);
+      game.handleStorageNumberClick(index, timer.timeLeft, timerDuration);
     } else if (item.type === 'timer') {
       timer.addTime(ITEM_CONFIG.TIMER_ADD_SECONDS);
       game.useStorageItem(index);
@@ -182,13 +190,15 @@ const App: React.FC = () => {
 
   // Handle gacha draw
   const handleGachaDraw = () => {
-    const currentScore = game.gameState?.score || 0;
+    const currentDifficultyLevel = game.difficultyLevel || 0;
+    console.log(`[handleGachaDraw] 传入的难度等级: ${currentDifficultyLevel}, getItemChanceByLevel结果: ${getItemChanceByLevel(currentDifficultyLevel)}`);
     gacha.performDraw((result) => {
       game.setGameState(prev => {
         if (!prev) return null;
         let score = prev.score;
         let newStorage = [...prev.storage];
         let timePenaltyCount = prev.timePenaltyCount;
+        let doubleScoreCount = prev.doubleScoreCount;
         let newGrid = prev.grid.map(col => [...col]);
 
         if (result.resultType === 'item') {
@@ -211,6 +221,9 @@ const App: React.FC = () => {
           } else if (result.eventId === 'time_half') {
             // 时间惩罚：接下来两回合减半
             timePenaltyCount = 2;
+          } else if (result.eventId === 'score_double') {
+            // 积分翻倍：接下来3个目标获得积分翻倍
+            doubleScoreCount = 3;
           } else if (result.eventId === 'dog_attack') {
             // 猎狗攻击：立即丢失一个数字
             // 从左侧或右侧随机移除一个数字
@@ -248,11 +261,12 @@ const App: React.FC = () => {
           totalDraws: prev.totalDraws + 1,
           storage: newStorage,
           timePenaltyCount,
+          doubleScoreCount,
           grid: newGrid,
           levelStartState: newLevelStartState
         };
       });
-    }, currentScore);
+    }, currentDifficultyLevel);
   };
 
   // ========== HOME SCREEN ==========
@@ -324,6 +338,7 @@ const App: React.FC = () => {
           <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Score</span>
           <span className="text-2xl font-black text-gray-900 leading-none">{game.gameState.score}</span>
         </div>
+
         <button
           onClick={() => { setIsPauseModalOpen(true); game.setGameState(p => p ? ({ ...p, isPaused: true }) : null); }}
           className="w-10 h-10 flex items-center justify-center rounded-xl bg-white ios-shadow text-gray-400 active:scale-90 transition-all border border-gray-100"
@@ -338,7 +353,7 @@ const App: React.FC = () => {
       </AnimatePresence>
 
       {/* Target Card */}
-      <div className="w-full max-w-md relative mb-3 shrink-0 h-[180px]">
+      <div className="w-full max-w-md relative mb-0 shrink-0 transform -translate-y-1">
         <TargetCard gameState={game.gameState} timeLeft={timer.timeLeft} maxTime={timerDuration} currentDiff={game.currentDiff} t={t} />
         {game.gameState.tutorialStep !== null && game.gameState.tutorialStep >= 3 && (
           <TutorialOverlay tutorialStep={game.gameState.tutorialStep} hintText={game.getTutorialHintText()} onNextStep={game.nextTutorialStep} t={t} />
@@ -346,19 +361,18 @@ const App: React.FC = () => {
       </div>
 
       {/* Reset Numbers Button */}
-      <div className="w-full max-w-md flex justify-end mb-2 shrink-0 pr-2">
+      <div className="w-full max-w-md flex justify-end mb-6 shrink-0 pr-4 mt-2">
         <button
           onClick={game.resetLevel}
-          className="flex items-center gap-2 px-4 py-1.5 bg-white/80 ios-blur rounded-full text-xs font-black text-gray-500 ios-shadow active:scale-95 transition-all border border-white/50"
+          className="flex items-center gap-2 px-4 py-2.5 bg-white ios-blur rounded-2xl text-[11px] font-black text-gray-400 ios-shadow active:scale-95 transition-all border border-gray-100 group"
         >
-          <i className="fas fa-rotate-left"></i>
+          <i className="fas fa-rotate-left group-active:rotate-180 transition-transform duration-500"></i>
           <span>{t.reset_numbers}</span>
         </button>
       </div>
 
-      {/* Game Board */}
-      <div className={`w-full max-w-md relative flex-grow flex flex-col justify-center overflow-visible`}>
-        <GameBoard gameState={game.gameState} onCellClick={game.handleCellClick} />
+      <div className={`w-full max-w-md relative flex-grow flex flex-col justify-start mt-[-4px] overflow-visible`}>
+        <GameBoard gameState={game.gameState} onCellClick={(col, row) => game.handleCellClick(col, row, timer.timeLeft, timerDuration)} />
         {game.gameState.tutorialStep !== null && game.gameState.tutorialStep < 3 && (
           <div className="absolute inset-0 z-[1002] flex items-center justify-center p-4">
             <TutorialOverlay tutorialStep={game.gameState.tutorialStep} hintText={game.getTutorialHintText()} onNextStep={game.nextTutorialStep} t={t} />
@@ -409,6 +423,9 @@ const App: React.FC = () => {
             highestCombo: gameStatsRef.current.highestCombo,
             highestDifficulty: gameStatsRef.current.highestDifficulty,
             endReason: 'settle',
+            currentDifficultyLevel: game.difficultyLevel,
+            itemsHeld: game.gameState!.storage.filter(i => i !== null).length,
+            username: username
           });
           updateHighScore(game.gameState!.score);
           if (FEATURES.LEADERBOARD) submitScore(username, game.gameState!.score);
@@ -425,6 +442,9 @@ const App: React.FC = () => {
             highestCombo: gameStatsRef.current.highestCombo,
             highestDifficulty: gameStatsRef.current.highestDifficulty,
             endReason: 'settle',
+            currentDifficultyLevel: game.difficultyLevel,
+            itemsHeld: game.gameState!.storage.filter(i => i !== null).length,
+            username: username
           });
           updateHighScore(game.gameState!.score);
           // Reset stats and start new session

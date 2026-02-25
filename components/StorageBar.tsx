@@ -20,12 +20,12 @@ const StorageBar: React.FC<StorageBarProps> = ({ gameState, drawProgress, onStor
     };
 
     return (
-        <div className={`w-full max-w-md mt-2 px-2 shrink-0 ${gameState.tutorialStep !== null ? 'opacity-10 pointer-events-none' : ''}`}>
+        <div className={`w-full max-w-md mt-1 px-2 shrink-0 ${gameState.tutorialStep !== null ? 'opacity-10 pointer-events-none' : ''}`}>
             <div className="flex justify-between items-end mb-1.5">
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.draw_progress}</span>
                 <span className="text-[10px] font-bold text-blue-400">{Math.floor(drawProgress)}%</span>
             </div>
-            <div className="w-full h-1 bg-gray-200 rounded-full mb-3 overflow-hidden">
+            <div className="w-full h-1 bg-gray-200 rounded-full mb-2 overflow-hidden">
                 <motion.div animate={{ width: `${drawProgress}%` }} className="h-full bg-blue-600" transition={{ duration: 0.3 }} />
             </div>
             <div className="grid grid-cols-4 gap-3">

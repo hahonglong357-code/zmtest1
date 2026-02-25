@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ScorePopup } from '../hooks/useGameCore';
 
 interface ScorePopupOverlayProps {
@@ -7,41 +7,62 @@ interface ScorePopupOverlayProps {
 }
 
 const ScorePopupOverlay: React.FC<ScorePopupOverlayProps> = ({ popups }) => {
+  const getTypeStyles = (type: ScorePopup['type']) => {
+    switch (type) {
+      case 'combo': return { color: '#3b82f6', fontSize: 'text-sm', icon: 'fa-fire' };
+      case 'perfect': return { color: '#10b981', fontSize: 'text-lg', icon: 'fa-check-circle' };
+      case 'speed': return { color: '#8b5cf6', fontSize: 'text-xs', icon: 'fa-bolt' };
+      default: return { color: '#f59e0b', fontSize: 'text-xl', icon: 'fa-coins' };
+    }
+  };
+
   return (
     <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-      {popups.map((popup) => (
-        <motion.div
-          key={popup.id}
-          initial={{ opacity: 0, scale: 0.5, y: 0 }}
-          animate={{ opacity: 1, scale: 1.2, y: -60 }}
-          exit={{ opacity: 0, y: -80 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="absolute"
-          style={{
-            left: '50%',
-            top: '15%',
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <div className="flex flex-col items-center">
-            <motion.span
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-              className="text-3xl font-black text-amber-500 drop-shadow-lg"
-              style={{ textShadow: '0 2px 8px rgba(251, 191, 36, 0.4)' }}
-            >
-              +{popup.amount}
-            </motion.span>
+      <AnimatePresence>
+        {popups.map((popup) => {
+          const style = getTypeStyles(popup.type);
+          return (
             <motion.div
-              initial={{ opacity: 1, scale: 0.8 }}
-              animate={{ opacity: 0, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-              className="w-2 h-2 bg-amber-400 rounded-full mt-1"
-            />
-          </div>
-        </motion.div>
-      ))}
+              key={popup.id}
+              initial={{ opacity: 0, scale: 0.5, x: 0, y: 0 }}
+              animate={{ opacity: 1, scale: 1.1, x: 0, y: -40 }}
+              exit={{ opacity: 0, scale: 0.8, x: 0, y: -60 }}
+              transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+              className="absolute pointer-events-none"
+              style={{
+                left: `${popup.x}%`,
+                top: `${popup.y}%`,
+              }}
+            >
+              <div className="flex flex-col items-start">
+                <div className="flex items-center gap-1.5 drop-shadow-md">
+                  {style.icon && <i className={`fas ${style.icon} ${style.fontSize} opacity-80`} style={{ color: style.color }}></i>}
+                  <span
+                    className={`${style.fontSize} font-black drop-shadow-lg`}
+                    style={{
+                      color: style.color,
+                      textShadow: `0 2px 10px ${style.color}44`
+                    }}
+                  >
+                    {typeof popup.amount === 'number' ? `+${popup.amount}` : popup.amount}
+                  </span>
+                </div>
+                {popup.label && (
+                  <motion.span
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-[10px] font-black tracking-tighter uppercase whitespace-nowrap"
+                    style={{ color: style.color }}
+                  >
+                    {popup.label}
+                  </motion.span>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 };

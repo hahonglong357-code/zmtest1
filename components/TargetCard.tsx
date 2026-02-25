@@ -44,9 +44,10 @@ const ConfettiParticle: React.FC<{ delay: number; color: string; side: 'left' | 
 );
 
 const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, currentDiff, t }) => {
-    // 确保timeLeft不超过maxTime，避免进度条显示异常
-    const effectiveTimeLeft = Math.min(timeLeft, maxTime);
-    const progress = maxTime > 0 ? (effectiveTimeLeft / maxTime) * 100 : 0;
+    // 移除数字显示的逻辑截断，允许显示超过 maxTime 的数值
+    const effectiveTimeLeft = timeLeft;
+    // 进度条依然受限在 0-100% 之间，防止超出容器
+    const progress = maxTime > 0 ? Math.min(100, (effectiveTimeLeft / maxTime) * 100) : 0;
     const diffKey = `diff_${gameState.currentTarget.diff}` as keyof Translations;
 
     // 检测目标值变化，用于触发动画
@@ -65,7 +66,7 @@ const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, c
     const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
     return (
-        <motion.div layout id="target-card" className={`relative w-full bg-white/80 ios-blur ios-shadow rounded-2xl p-4 flex flex-col items-center border border-white/50 transition-all duration-300 ${gameState.tutorialStep !== null && gameState.tutorialStep < 3 ? 'z-[1001] !bg-white scale-105 ring-4 ring-blue-400 shadow-2xl' : ''}`}>
+        <motion.div layout id="target-card" className={`relative w-full bg-white/80 ios-blur ios-shadow rounded-2xl p-3 flex flex-col items-center border border-white/50 transition-all duration-300 ${gameState.tutorialStep !== null && gameState.tutorialStep < 3 ? 'z-[1001] !bg-white scale-105 ring-4 ring-blue-400 shadow-2xl' : ''}`}>
             {/* 纸屑效果 */}
             <AnimatePresence>
                 {showConfetti && (
@@ -81,7 +82,7 @@ const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, c
             </AnimatePresence>
 
             {/* 目标数字 */}
-            <div className={`flex flex-col items-center transition-all ${gameState.tutorialStep === 0 ? 'scale-110' : ''}`}>
+            <div className={`flex flex-col items-center transition-all ${gameState.tutorialStep === 0 ? 'scale-105' : ''}`}>
                 <motion.div
                     key={gameState.currentTarget.value}
                     initial={{ scale: 0.5, opacity: 0 }}
@@ -94,54 +95,87 @@ const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, c
                             damping: 15
                         }
                     }}
-                    whileInView={{ scale: [1, 1.2, 1] }}
+                    whileInView={{ scale: [1, 1.1, 1] }}
                     viewport={{ once: false }}
-                    className={`text-5xl font-black tracking-tighter leading-none ${currentDiff ? currentDiff.color : 'text-blue-600'}`}
+                    className={`text-6xl font-black tracking-tighter leading-none ${currentDiff ? currentDiff.color : 'text-blue-600'}`}
                 >
                     {gameState.currentTarget.value}
                 </motion.div>
-                <AnimatePresence mode="wait">
-                    {currentDiff && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -5 }}
-                            className={`mt-2 px-3 py-1 rounded-full text-xs font-black tracking-widest border ${currentDiff.bg} ${currentDiff.color} ${currentDiff.border}`}
-                        >
-                            {t[diffKey] as string}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* 移除难度标识 (普通/困难等) */}
             </div>
 
             {/* 下一个目标 */}
-            <div className={`mt-3 flex items-center gap-2 px-3 py-1 rounded-full transition-all ${gameState.tutorialStep === 1 ? 'bg-blue-600 !text-white ring-4 ring-blue-300 scale-105' : 'text-gray-400 bg-gray-100/50'}`}>
+            <div className={`mt-2 flex items-center gap-2 px-3 py-1 rounded-full transition-all ${gameState.tutorialStep === 1 ? 'bg-blue-600 !text-white ring-4 ring-blue-300 scale-105' : 'text-gray-400 bg-gray-100/40'}`}>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${gameState.tutorialStep === 1 ? 'text-blue-100' : 'text-gray-400'}`}>NEXT</span>
-                <span className="text-sm font-bold">{gameState.nextTarget.value}</span>
+                <span className="text-base font-bold">{gameState.nextTarget.value}</span>
             </div>
 
-            {/* 倒计时进度条 */}
-            <div className="w-full mt-4">
-                <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-medium text-gray-500">Time</span>
-                    <span className="text-xs font-mono font-bold text-gray-700">{effectiveTimeLeft.toFixed(1)}s</span>
+            {/* 倒计时进度条 - 优化设计 */}
+            <div className="w-full mt-3 px-1">
+                <div className="flex justify-between items-end mb-1">
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <i className={`fas fa-bolt text-[9px] ${progress > 70 ? 'text-blue-500' : progress > 40 ? 'text-purple-500' : 'text-red-400'}`}></i>
+                            <span className="text-[9px] font-black text-gray-500 uppercase">
+                                {progress > 70 ? 'Super Fast' : progress > 40 ? 'Fast' : 'Normal'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                        <span className={`text-base font-mono font-black tracking-tighter ${effectiveTimeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-gray-900'}`}>
+                            {effectiveTimeLeft.toFixed(1)}
+                        </span>
+                        <span className="text-[9px] font-black text-gray-400">SEC</span>
+                    </div>
                 </div>
-                <div className="w-full h-2 bg-gray-200/50 rounded-full overflow-hidden border border-gray-100/50">
+
+                <div className="relative w-full h-2 bg-gray-100 rounded-full border border-gray-200/30 ios-shadow-inner group">
+                    {/* 倍率关键点刻度 */}
+                    <div className="absolute inset-0 z-10 pointer-events-none">
+                        {/* 70% 刻度 */}
+                        <div className="absolute left-[70%] top-[-4px] bottom-[-4px] w-[2px] bg-white shadow-sm z-20">
+                            <span className="absolute bottom-[-14px] left-1/2 -translate-x-1/2 text-[8px] font-black text-blue-500/60">x1.5</span>
+                        </div>
+                        {/* 40% 刻度 */}
+                        <div className="absolute left-[40%] top-[-4px] bottom-[-4px] w-[2px] bg-white shadow-sm z-20">
+                            <span className="absolute bottom-[-14px] left-1/2 -translate-x-1/2 text-[8px] font-black text-purple-500/60">x1.2</span>
+                        </div>
+                        {/* 起始点标识 */}
+                        <span className="absolute bottom-[-14px] left-0 text-[8px] font-black text-red-400/60 text-left">x1.0</span>
+                    </div>
+
+                    {/* 进度主条 */}
+                    <div className="absolute inset-0 rounded-full overflow-hidden">
+                        <motion.div
+                            className="h-full"
+                            initial={{ width: '100%' }}
+                            animate={{
+                                width: `${progress}%`,
+                                background: progress < 40
+                                    ? 'linear-gradient(90deg, #f87171, #ef4444)' // Normal
+                                    : progress < 70
+                                        ? 'linear-gradient(90deg, #a78bfa, #8b5cf6)' // Fast
+                                        : 'linear-gradient(90deg, #60a5fa, #3b82f6)' // Super Fast
+                            }}
+                            transition={{ duration: 0.1, ease: "linear" }}
+                        />
+                    </div>
+
+                    {/* 光晕追随器 */}
                     <motion.div
-                        className="h-full rounded-full"
-                        initial={{ width: '100%' }}
+                        className="absolute top-0 bottom-0 w-4 z-20"
                         animate={{
-                            width: `${progress}%`,
-                            background: progress < 30
-                                ? 'linear-gradient(90deg, #ef4444, #dc2626)'
-                                : 'linear-gradient(90deg, #3b82f6, #2563eb)'
+                            left: `${progress}%`,
+                            opacity: progress > 0 ? 1 : 0
                         }}
-                        transition={{ duration: 0.1, ease: "linear" }}
                         style={{
-                            boxShadow: '0 0 8px rgba(37, 99, 235, 0.4)'
+                            background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)',
+                            transform: 'translateX(-50%)'
                         }}
                     />
                 </div>
+                {/* 增加一些底部边距防止遮挡 */}
+                <div className="h-4"></div>
             </div>
         </motion.div>
     );

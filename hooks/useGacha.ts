@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { StorageItem, ItemType, GachaResult, GachaItemResult, GachaEventResult } from '../types';
-import { generateRandomId, GACHA_NARRATIVES, GACHA_EVENTS, GACHA_ITEM_POOL, getItemChance } from '../gameConfig';
+import { generateRandomId, GACHA_NARRATIVES, GACHA_EVENTS, GACHA_ITEM_POOL, getItemChanceByLevel } from '../gameConfig';
 
 export function useGacha() {
     const [isOpen, setIsOpen] = useState(false);
@@ -36,13 +36,15 @@ export function useGacha() {
         return { narrative: intro, itemName };
     };
 
-    const performDraw = useCallback((onResult: (result: GachaResult) => void, score: number = 0) => {
+    const performDraw = useCallback((onResult: (result: GachaResult) => void, difficultyLevel: number = 0) => {
         setIsDrawing(true);
 
         setTimeout(() => {
-            // 根据当前分数计算道具获得概率
-            const itemChance = getItemChance(score);
-            const isItem = Math.random() < itemChance;
+            // 根据当前难度等级计算道具获得概率
+            const itemChance = getItemChanceByLevel(difficultyLevel);
+            const rand = Math.random();
+            const isItem = rand < itemChance;
+            console.log(`[抽卡调试] 难度等级: ${difficultyLevel}, 概率: ${itemChance}, 随机数: ${rand}, 结果: ${isItem ? '获得道具' : '触发事件'}`);
             let result: GachaResult;
 
             if (isItem) {
