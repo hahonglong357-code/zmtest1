@@ -44,7 +44,9 @@ const ConfettiParticle: React.FC<{ delay: number; color: string; side: 'left' | 
 );
 
 const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, currentDiff, t }) => {
-    const progress = maxTime > 0 ? (timeLeft / maxTime) * 100 : 0;
+    // 确保timeLeft不超过maxTime，避免进度条显示异常
+    const effectiveTimeLeft = Math.min(timeLeft, maxTime);
+    const progress = maxTime > 0 ? (effectiveTimeLeft / maxTime) * 100 : 0;
     const diffKey = `diff_${gameState.currentTarget.diff}` as keyof Translations;
 
     // 检测目标值变化，用于触发动画
@@ -119,21 +121,27 @@ const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, c
             </div>
 
             {/* 倒计时进度条 */}
-            <div className="w-full h-2 bg-gray-200/50 rounded-full overflow-hidden mt-4 border border-gray-100/50">
-                <motion.div
-                    className="h-full rounded-full"
-                    initial={{ width: '100%' }}
-                    animate={{
-                        width: `${progress}%`,
-                        background: progress < 30
-                            ? 'linear-gradient(90deg, #ef4444, #dc2626)'
-                            : 'linear-gradient(90deg, #3b82f6, #2563eb)'
-                    }}
-                    transition={{ duration: 0.3, ease: "linear" }}
-                    style={{
-                        boxShadow: '0 0 8px rgba(37, 99, 235, 0.4)'
-                    }}
-                />
+            <div className="w-full mt-4">
+                <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-medium text-gray-500">Time</span>
+                    <span className="text-xs font-mono font-bold text-gray-700">{effectiveTimeLeft.toFixed(1)}s</span>
+                </div>
+                <div className="w-full h-2 bg-gray-200/50 rounded-full overflow-hidden border border-gray-100/50">
+                    <motion.div
+                        className="h-full rounded-full"
+                        initial={{ width: '100%' }}
+                        animate={{
+                            width: `${progress}%`,
+                            background: progress < 30
+                                ? 'linear-gradient(90deg, #ef4444, #dc2626)'
+                                : 'linear-gradient(90deg, #3b82f6, #2563eb)'
+                        }}
+                        transition={{ duration: 0.1, ease: "linear" }}
+                        style={{
+                            boxShadow: '0 0 8px rgba(37, 99, 235, 0.4)'
+                        }}
+                    />
+                </div>
             </div>
         </motion.div>
     );

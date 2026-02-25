@@ -36,6 +36,7 @@ const App: React.FC = () => {
   const [username, setUsername] = useState('');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [savedGameState, setSavedGameState] = useState<ReturnType<typeof useGameCore>['gameState'] | null>(null);
 
   const t = TRANSLATIONS[language];
 
@@ -51,18 +52,46 @@ const App: React.FC = () => {
     ? game.gameState.currentTarget.core_base * currentTimerMultiplier * (game.gameState.timePenaltyCount > 0 ? 0.5 : 1)
     : 100; // 教程期间或无目标时固定100秒
 
+  // 简化计时器激活条件，确保游戏开始后立即激活
   const timerActive = FEATURES.TIMER && !!game.gameState && !game.gameState.isGameOver && !game.gameState.isPaused &&
-    !game.isSynthesizing && !showLeaderboard && !gacha.isOpen && !isPauseModalOpen && game.gameState.tutorialStep === null;
+    game.gameState.tutorialStep === null;
 
+  // 计算有效的剩余时间
+  // 优先级：游戏状态中的时间 > 保存的游戏状态中的时间 > 基于目标难度计算的时间
+  const effectiveTimeLeft = game.gameState?.timeLeft || savedGameState?.timeLeft || timerDuration;
+  
+  // 直接在顶层调用useTimer Hook，遵循React的Hook规则
   const timer = useTimer({
     isActive: timerActive,
     duration: timerDuration,
     resetKey: game.gameState?.totalTargetsCleared,
+    initialTimeLeft: effectiveTimeLeft,
     onTimeUp: () => {
       gameStatsRef.current.endReason = 'time_up';
       game.setGameState(g => g ? { ...g, isGameOver: true } : null);
     }
   });
+  
+  // 简化时间管理，只在返回主页时保存时间
+  // 避免实时同步导致的性能问题和状态冲突
+  const handleSaveTimeBeforeExit = () => {
+    if (game.gameState && !game.gameState.isGameOver) {
+      game.setGameState(prev => prev ? ({ ...prev, timeLeft: timer.timeLeft }) : null);
+    }
+  };
+
+  // 页面卸载时保存当前时间
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      handleSaveTimeBeforeExit();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [game.gameState, timer.timeLeft]);
 
   // Track game stats for analytics
   const gameStatsRef = useRef({ highestCombo: 0, highestDifficulty: 0, endReason: 'settle' as 'settle' | 'time_up' });
@@ -87,7 +116,26 @@ const App: React.FC = () => {
     if (savedHighScore) setPersonalHighScore(parseInt(savedHighScore, 10));
     const savedUsername = localStorage.getItem('last_username');
     if (savedUsername) setUsername(savedUsername);
+    
+    // Load saved game state from localStorage
+    const savedGame = localStorage.getItem('saved_game_state');
+    if (savedGame) {
+      try {
+        const parsedGameState = JSON.parse(savedGame);
+        setSavedGameState(parsedGameState);
+      } catch (error) {
+        console.error('Failed to parse saved game state:', error);
+        localStorage.removeItem('saved_game_state');
+      }
+    }
   }, []);
+  
+  // Save game state to localStorage when it changes
+  useEffect(() => {
+    if (game.gameState && !game.gameState.isGameOver) {
+      localStorage.setItem('saved_game_state', JSON.stringify(game.gameState));
+    }
+  }, [game.gameState]);
 
   // Gacha trigger - 每完成一个目标触发一次抽卡
   useEffect(() => {
@@ -226,14 +274,35 @@ const App: React.FC = () => {
             // Start analytics session
             userAnalytics.startGameSession();
 
-            const hasVisited = localStorage.getItem('quest_visited');
-            if (!hasVisited && FEATURES.TUTORIAL) {
-              game.startTutorial();
-            } else {
-              game.resetGame();
-            }
-            setCurrentView('game');
+            // 清除保存的游戏状态，确保新游戏使用新的时间
+            setSavedGameState(null);
+            localStorage.removeItem('saved_game_state');
+
+            // 强制刷新游戏状态，确保使用新的时间
+            // 先设置为null，然后在下一个渲染周期后重置游戏
+            game.setGameState(null);
+            setTimeout(() => {
+              const hasVisited = localStorage.getItem('quest_visited');
+              if (!hasVisited && FEATURES.TUTORIAL) {
+                game.startTutorial();
+              } else {
+                game.resetGame();
+              }
+              setCurrentView('game');
+            }, 0);
           }}
+          onContinueGame={() => {
+            if (savedGameState) {
+              // 恢复游戏状态并确保游戏是非暂停状态
+              game.setGameState({ ...savedGameState, isPaused: false });
+              // 延迟清空savedGameState，确保effectiveTimeLeft能够正确计算
+              setTimeout(() => {
+                setSavedGameState(null);
+              }, 0);
+              setCurrentView('game');
+            }
+          }}
+          hasSavedGame={!!savedGameState}
           onShowLeaderboard={() => setShowLeaderboard(true)}
           onShowFeedback={() => setShowFeedback(true)}
         />
@@ -307,7 +376,16 @@ const App: React.FC = () => {
         isOpen={isPauseModalOpen}
         onContinue={() => { setIsPauseModalOpen(false); game.setGameState(p => p ? ({ ...p, isPaused: false }) : null); }}
         onSettle={() => { setIsPauseModalOpen(false); game.setGameState(p => p ? ({ ...p, isPaused: false, isGameOver: true }) : null); }}
-        onBackToHome={() => { setIsPauseModalOpen(false); setCurrentView('home'); game.setGameState(null); }}
+        onBackToHome={() => {
+          setIsPauseModalOpen(false);
+          // 保存当前游戏状态和计时器时间
+          handleSaveTimeBeforeExit();
+          const currentState = game.gameState;
+          if (currentState) {
+            setSavedGameState(currentState);
+          }
+          setCurrentView('home');
+        }}
         t={t}
       />
 
@@ -334,6 +412,9 @@ const App: React.FC = () => {
           });
           updateHighScore(game.gameState!.score);
           if (FEATURES.LEADERBOARD) submitScore(username, game.gameState!.score);
+          localStorage.removeItem('saved_game_state');
+          // 确保游戏状态被清空，避免影响下一局
+          game.setGameState(null);
           setCurrentView('home');
         }}
         onPlayAgain={() => {
@@ -349,7 +430,13 @@ const App: React.FC = () => {
           // Reset stats and start new session
           gameStatsRef.current = { highestCombo: 0, highestDifficulty: 0 };
           userAnalytics.startGameSession();
-          game.resetGame();
+          // 先清空游戏状态，然后再重置，确保完全刷新
+          game.setGameState(null);
+          // 确保在下一个渲染周期后重置游戏，避免状态冲突
+          setTimeout(() => {
+            game.resetGame();
+          }, 0);
+          localStorage.removeItem('saved_game_state');
         }}
         t={t}
       />

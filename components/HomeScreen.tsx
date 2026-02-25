@@ -10,12 +10,14 @@ interface HomeScreenProps {
     onShowTutorial: () => void;
     t: Translations;
     onStartGame: () => void;
+    onContinueGame?: () => void;
+    hasSavedGame?: boolean;
     onShowLeaderboard: () => void;
     onShowFeedback: () => void;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({
-    personalHighScore, language, onLanguageToggle, onShowTutorial, t, onStartGame, onShowLeaderboard, onShowFeedback
+    personalHighScore, language, onLanguageToggle, onShowTutorial, t, onStartGame, onContinueGame, hasSavedGame, onShowLeaderboard, onShowFeedback
 }) => (
     <div className="h-dvh flex flex-col items-center justify-center bg-[#FDFDFD] p-8 text-center safe-top safe-bottom overflow-hidden relative">
         <div className="absolute top-8 right-8 z-20 flex gap-2">
@@ -67,6 +69,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.div>
 
             <div className="flex flex-col gap-6 w-full max-w-[280px]">
+                {hasSavedGame && onContinueGame && (
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={onContinueGame}
+                        className="w-full py-5 bg-gradient-to-r from-[#93C5FD] to-[#3B82F6] text-white rounded-[32px] font-black text-xl shadow-lg shadow-blue-200/50 transition-all"
+                    >
+                        {t.continue_game}
+                    </motion.button>
+                )}
+                
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.95 }}

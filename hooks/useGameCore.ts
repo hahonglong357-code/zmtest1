@@ -38,7 +38,8 @@ export function useGameCore(t: Translations) {
             lastGachaThreshold: 0,
             timePenaltyCount: 0,
             dogAttackCount: 0,
-            lastDifficultyLevel: 0
+            lastDifficultyLevel: 0,
+            timeLeft: 100 // 初始时间
         });
         return firstTarget;
     }, []);
@@ -61,7 +62,8 @@ export function useGameCore(t: Translations) {
             lastGachaThreshold: 0,
             timePenaltyCount: 0,
             dogAttackCount: 0,
-            lastDifficultyLevel: 0
+            lastDifficultyLevel: 0,
+            timeLeft: 100 // 教程初始时间
         });
     }, []);
 
@@ -266,7 +268,8 @@ export function useGameCore(t: Translations) {
                     tutorialStep: prev.tutorialStep !== null ? prev.tutorialStep + 1 : null,
                     timePenaltyCount: newTimePenaltyCount,
                     dogAttackCount: (isMatch && dogAttackCount > 0) ? 0 : dogAttackCount,
-                    lastDifficultyLevel: isMatch ? getDifficultyLevel(score) : prev.lastDifficultyLevel
+                    lastDifficultyLevel: isMatch ? getDifficultyLevel(score) : prev.lastDifficultyLevel,
+                    timeLeft: isMatch ? 100 : prev.timeLeft // 目标匹配时重置时间
                 };
             });
             setIsSynthesizing(false);
