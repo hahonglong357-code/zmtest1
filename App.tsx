@@ -18,7 +18,6 @@ import FeedbackModal from './components/FeedbackModal';
 import GameBoard from './components/GameBoard';
 import TargetCard from './components/TargetCard';
 import StorageBar from './components/StorageBar';
-import GachaModal from './components/GachaModal';
 import PauseModal from './components/PauseModal';
 import GameOverModal from './components/GameOverModal';
 import LeaderboardOverlay from './components/LeaderboardOverlay';
@@ -144,22 +143,32 @@ const App: React.FC = () => {
     if (game.gameState.totalTargetsCleared > 0 &&
       game.gameState.totalTargetsCleared % GAME_PARAMS.GACHA_TARGETS_THRESHOLD === 0 &&
       !gacha.isOpen && game.gameState.tutorialStep === null) {
-      const lastHandled = game.gameState.lastGachaThreshold || 0;
-      if (game.gameState.totalTargetsCleared > lastHandled) {
-        // 立即标记已处理，防止重复触发
+      if (game.gameState.totalTargetsCleared > game.gameState.lastGachaThreshold &&
+        game.gameState.totalTargetsCleared % GAME_PARAMS.GACHA_TARGETS_THRESHOLD === 0 &&
+        game.gameState.tutorialStep === null) {
+
         game.setGameState(prev => prev ? ({ ...prev, lastGachaThreshold: prev.totalTargetsCleared }) : null);
 
-        // 延迟 1200ms 弹出抽卡，让分数反馈和纸屑特效先播放完
+        // 延迟 400ms 触发抽卡效果（让结算动画稍微缓冲一下）
         const timer = setTimeout(() => {
-          // 再次检查确认格子未满且弹窗未开启
-          if (!gacha.isOpen && game.gameState && game.gameState.storage.some(s => s === null)) {
-            gacha.setIsOpen(true);
+          if (game.gameState && game.gameState.storage.some(s => s === null)) {
+            handleGachaDraw();
           }
-        }, 1200);
+        }, 400);
         return () => clearTimeout(timer);
       }
     }
-  }, [game.gameState?.totalTargetsCleared, gacha.isOpen, game.gameState?.tutorialStep, game.gameState?.storage, game.setGameState, gacha.setIsOpen]);
+  }, [game.gameState?.totalTargetsCleared, game.gameState?.tutorialStep, game.gameState?.storage, game.setGameState]);
+
+  // 自动清除事件文案逻辑：触发后的第一个目标保持，第二个目标恢复闲聊
+  useEffect(() => {
+    if (!game.gameState || !gacha.drawResult || game.gameState.lastEventTargetIndex === null) return;
+
+    // 逻辑：当前完成数 > 触发事件时的完成数 + 1
+    if (game.gameState.totalTargetsCleared > game.gameState.lastEventTargetIndex + 1) {
+      gacha.claimReward(); // 清除结果，使 StorageBar 切换回 idleNarrative
+    }
+  }, [game.gameState?.totalTargetsCleared, gacha.drawResult, game.gameState?.lastEventTargetIndex, gacha]);
 
   // Update high score
   const updateHighScore = (score: number) => {
@@ -263,7 +272,8 @@ const App: React.FC = () => {
           timePenaltyCount,
           doubleScoreCount,
           grid: newGrid,
-          levelStartState: newLevelStartState
+          levelStartState: newLevelStartState,
+          lastEventTargetIndex: prev.totalTargetsCleared // 记录触发事件时的目标完成数
         };
       });
     }, currentDifficultyLevel);
@@ -330,12 +340,12 @@ const App: React.FC = () => {
   if (!game.gameState) return null;
 
   return (
-    <div className="h-dvh flex flex-col items-center bg-[#f2f2f7] text-black px-4 pt-4 pb-12 overflow-hidden relative selection:bg-blue-500/20 safe-top safe-bottom">
+    <div className="h-dvh flex flex-col items-center bg-[#f2f2f7] text-black px-4 pt-2 pb-12 overflow-hidden relative selection:bg-blue-500/20 safe-top safe-bottom">
 
       {/* Top Bar */}
-      <div className="w-full max-w-md flex justify-between items-center px-2 mb-2 shrink-0">
+      <div className="w-full max-w-md flex justify-between items-center px-2 mb-1 shrink-0">
         <div className="flex flex-col items-start">
-          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Score</span>
+          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Score</span>
           <span className="text-2xl font-black text-gray-900 leading-none">{game.gameState.score}</span>
         </div>
 
@@ -368,7 +378,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Reset Numbers Button */}
-      <div className="w-full max-w-md flex justify-end mb-6 shrink-0 pr-4 mt-2">
+      <div className="w-full max-w-md flex justify-end mb-2 shrink-0 pr-4 mt-1">
         <button
           onClick={game.resetLevel}
           className="flex items-center gap-2 px-4 py-2.5 bg-white ios-blur rounded-2xl text-[11px] font-black text-gray-400 ios-shadow active:scale-95 transition-all border border-gray-100 group"
@@ -379,7 +389,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Game Board - 动态提升教程层级 */}
-      <div className={`w-full max-w-md relative flex-grow flex flex-col justify-start mt-[-4px] overflow-visible transition-all duration-300 ${game.gameState.tutorialStep !== null && game.gameState.tutorialStep >= 3 ? 'z-[1001]' : 'z-10'}`}>
+      <div className={`w-full max-w-md relative flex-grow flex flex-col justify-start mt-[-10px] overflow-visible transition-all duration-300 ${game.gameState.tutorialStep !== null && game.gameState.tutorialStep >= 3 ? 'z-[1001]' : 'z-10'}`}>
         <GameBoard
           gameState={game.gameState}
           onCellClick={(col, row) => game.handleCellClick(col, row, timer.timeLeft, timerDuration)}
@@ -395,7 +405,13 @@ const App: React.FC = () => {
 
       {/* Storage Bar */}
       {FEATURES.STORAGE && (
-        <StorageBar gameState={game.gameState} drawProgress={game.drawProgress} onStorageClick={handleStorageClick} t={t} />
+        <StorageBar
+          gameState={game.gameState}
+          drawProgress={game.drawProgress}
+          lastResult={gacha.drawResult}
+          onStorageClick={handleStorageClick}
+          t={t}
+        />
       )}
 
       {/* Modals */}
@@ -416,12 +432,6 @@ const App: React.FC = () => {
         t={t}
       />
 
-      {FEATURES.GACHA && (
-        <GachaModal
-          isOpen={gacha.isOpen} isDrawing={gacha.isDrawing} drawResult={gacha.drawResult}
-          onDraw={handleGachaDraw} onClaim={gacha.claimReward} t={t}
-        />
-      )}
 
       <GameOverModal
         isOpen={game.gameState.isGameOver}
@@ -468,6 +478,7 @@ const App: React.FC = () => {
           // 确保在下一个渲染周期后重置游戏，避免状态冲突
           setTimeout(() => {
             game.resetGame();
+            gacha.resetGacha();
           }, 0);
           localStorage.removeItem('saved_game_state');
         }}

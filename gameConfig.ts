@@ -243,8 +243,8 @@ export const GACHA_NARRATIVES = {
     "在路上钓了会鱼，钓上来一个",
     "你觉得太难，朝天上骂了几句，天上掉下来一个",
     "你觉得太难，向天上拜了拜，天上掉下来一个",
-    "路上碰到熟人了，他有不少宝贝，给了你一个",
-    "路上碰到制作者了，打了他一顿，他口袋里有个",
+    "路上碰到熟人，他给了你一个",
+    "路上碰到制作者，打了他一顿，他口袋里有个",
     "数字士兵向你求饶，并给你"
   ] as string[],
   // 道具名称映射（用于文案组合）
@@ -253,7 +253,19 @@ export const GACHA_NARRATIVES = {
     timer: "加时工具",
     refresh: "刷新令牌",
     score: "500金币"
-  } as Record<ItemType, string>
+  } as Record<ItemType, string>,
+  // 无事发生时的闲聊文案
+  IDLE_NARRATIVES: [
+    "空气中弥漫着大脑过载的味道",
+    "大干一场吧",
+    "十个手指应该够用",
+    "easy,easy",
+    "什么？你说这些数字是士兵？",
+    "这里的景色不错，不是吗？",
+    "其实很简单～其实很自然～",
+    "你感觉今天运气不错",
+    "感觉袋子空空的",
+  ] as string[]
 };
 
 /**
@@ -271,25 +283,25 @@ export type GachaEventConfig = {
 export const GACHA_EVENTS: GachaEventConfig[] = [
   {
     id: 'time_half',
-    text: "你沉浸在上一次胜利中，这次迟到了，接下来的两回合时间减半",
+    text: "沉浸在胜利中迟到了，2回合内时间减半",
     icon: 'fa-clock',
     iconColor: 'text-amber-500'
   },
   {
     id: 'items_lost',
-    text: "你来的路上摔了一跤，道具掉了你也不知道",
+    text: "路上摔了一跤，道具似乎掉了一些",
     icon: 'fa-tshirt',
     iconColor: 'text-rose-500'
   },
   {
     id: 'dog_attack',
-    text: "来的路上碰到了数字猎狗，你不得不丢出一个数字保全自己",
+    text: "碰到数字猎狗，被迫丢出一个数字保命",
     icon: 'fa-dog',
     iconColor: 'text-orange-500'
   },
   {
     id: 'score_double',
-    text: "摸了摸一件路边的衣服，是双倍金币卡！",
+    text: "捡到复制器，3回合内获得双倍金币！",
     icon: 'fa-coins',
     iconColor: 'text-yellow-500'
   }

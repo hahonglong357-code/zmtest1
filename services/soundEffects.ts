@@ -10,7 +10,7 @@ const getAudioContext = (): AudioContext | null => {
         }
         // 如果 AudioContext 被挂起，尝试恢复
         if (audioContext.state === 'suspended') {
-            audioContext.resume().catch(() => {});
+            audioContext.resume().catch(() => { });
         }
         return audioContext;
     } catch (e) {
@@ -168,6 +168,36 @@ export const playGachaSound = () => {
         gain.connect(masterGain);
         osc.start();
         osc.stop(ctx.currentTime + 0.6);
+    });
+};
+
+// 信息提示音效 - 简洁明快
+export const playNotificationSound = () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.1, ctx.currentTime);
+    masterGain.connect(ctx.destination);
+
+    // 两个清脆的高音，模拟通知声
+    const notes = [880, 1174.66]; // A5, D6
+
+    notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02 + (i * 0.08));
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15 + (i * 0.08));
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(ctx.currentTime + (i * 0.08));
+        osc.stop(ctx.currentTime + 0.2 + (i * 0.08));
     });
 };
 

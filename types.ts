@@ -77,6 +77,7 @@ export interface GameState {
   levelStartState: LevelStartState | null;
   tutorialStep: number | null; // null means tutorial finished or not started
   lastGachaThreshold: number;
+  lastEventTargetIndex: number | null; // 记录最近一次触发事件时的目标完成数
   timePenaltyCount: number; // 剩余时间惩罚次数（事件效果计数）
   doubleScoreCount: number; // 积分翻倍次数
   dogAttackCount: number; // 猎狗攻击：下回合丢失一个数字

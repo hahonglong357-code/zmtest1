@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { StorageItem, ItemType, GachaResult, GachaItemResult, GachaEventResult } from '../types';
 import { generateRandomId, GACHA_NARRATIVES, GACHA_EVENTS, GACHA_ITEM_POOL, getItemChanceByLevel } from '../gameConfig';
+import { playNotificationSound } from '../services/soundEffects';
 
 export function useGacha() {
     const [isOpen, setIsOpen] = useState(false);
@@ -77,8 +78,9 @@ export function useGacha() {
 
             onResult(result);
             setDrawResult(result);
+            playNotificationSound();
             setIsDrawing(false);
-        }, 800);
+        }, 600);
     }, []);
 
     const claimReward = useCallback(() => {
@@ -87,5 +89,12 @@ export function useGacha() {
         setIsNewDiscovery(false);
     }, []);
 
-    return { isOpen, setIsOpen, isDrawing, drawResult, isNewDiscovery, performDraw, claimReward };
+    const resetGacha = useCallback(() => {
+        setDrawResult(null);
+        setIsDrawing(false);
+        setIsNewDiscovery(false);
+        setIsOpen(false);
+    }, []);
+
+    return { isOpen, setIsOpen, isDrawing, drawResult, isNewDiscovery, performDraw, claimReward, resetGacha };
 }
