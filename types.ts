@@ -51,7 +51,6 @@ export interface Position {
 export interface TargetData {
   value: number;
   diff: number;
-  core_base: number;
 }
 
 export interface LevelStartState {
@@ -81,6 +80,5 @@ export interface GameState {
   timePenaltyCount: number; // 剩余时间惩罚次数（事件效果计数）
   doubleScoreCount: number; // 积分翻倍次数
   dogAttackCount: number; // 猎狗攻击：下回合丢失一个数字
-  lastDifficultyLevel: number; // 上一次显示横幅的难度等级
   timeLeft: number; // 剩余时间
 }

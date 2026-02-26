@@ -9,101 +9,101 @@ import { TargetData, ItemType, Cell, Operator } from './types';
  */
 export const TARGET_CATALOG: TargetData[] = [
   // LEVEL 0: EASY (9 numbers) - Simple numbers <= 60
-  { value: 12, diff: 0, core_base: 3 }, { value: 20, diff: 0, core_base: 3 },
-  { value: 24, diff: 0, core_base: 3 }, { value: 30, diff: 0, core_base: 3 },
-  { value: 36, diff: 0, core_base: 3 }, { value: 40, diff: 0, core_base: 3 },
-  { value: 48, diff: 0, core_base: 3 }, { value: 50, diff: 0, core_base: 3 },
-  { value: 60, diff: 0, core_base: 3 },
+  { value: 12, diff: 0 }, { value: 20, diff: 0 },
+  { value: 24, diff: 0 }, { value: 30, diff: 0 },
+  { value: 36, diff: 0 }, { value: 40, diff: 0 },
+  { value: 48, diff: 0 }, { value: 50, diff: 0 },
+  { value: 60, diff: 0 },
 
   // LEVEL 1: NORMAL (42 numbers) - Common composite numbers
-  { value: 14, diff: 1, core_base: 4 }, { value: 15, diff: 1, core_base: 4 },
-  { value: 16, diff: 1, core_base: 4 }, { value: 18, diff: 1, core_base: 4 },
-  { value: 21, diff: 1, core_base: 4 }, { value: 22, diff: 1, core_base: 4 },
-  { value: 25, diff: 1, core_base: 5 }, { value: 26, diff: 1, core_base: 5 },
-  { value: 27, diff: 1, core_base: 5 }, { value: 28, diff: 1, core_base: 5 },
-  { value: 32, diff: 1, core_base: 5 }, { value: 33, diff: 1, core_base: 5 },
-  { value: 34, diff: 1, core_base: 5 }, { value: 35, diff: 1, core_base: 5 },
-  { value: 38, diff: 1, core_base: 5 }, { value: 39, diff: 1, core_base: 5 },
-  { value: 42, diff: 1, core_base: 5 }, { value: 44, diff: 1, core_base: 5 },
-  { value: 45, diff: 1, core_base: 5 }, { value: 46, diff: 1, core_base: 5 },
-  { value: 49, diff: 1, core_base: 5 }, { value: 52, diff: 1, core_base: 5 },
-  { value: 54, diff: 1, core_base: 5 }, { value: 55, diff: 1, core_base: 5 },
-  { value: 56, diff: 1, core_base: 5 }, { value: 63, diff: 1, core_base: 5 },
-  { value: 64, diff: 1, core_base: 5 }, { value: 65, diff: 1, core_base: 5 },
-  { value: 66, diff: 1, core_base: 5 }, { value: 70, diff: 1, core_base: 5 },
-  { value: 75, diff: 1, core_base: 5 }, { value: 77, diff: 1, core_base: 5 },
-  { value: 78, diff: 1, core_base: 5 }, { value: 81, diff: 1, core_base: 5 },
+  { value: 14, diff: 1 }, { value: 15, diff: 1 },
+  { value: 16, diff: 1 }, { value: 18, diff: 1 },
+  { value: 21, diff: 1 }, { value: 22, diff: 1 },
+  { value: 25, diff: 1 }, { value: 26, diff: 1 },
+  { value: 27, diff: 1 }, { value: 28, diff: 1 },
+  { value: 32, diff: 1 }, { value: 33, diff: 1 },
+  { value: 34, diff: 1 }, { value: 35, diff: 1 },
+  { value: 38, diff: 1 }, { value: 39, diff: 1 },
+  { value: 42, diff: 1 }, { value: 44, diff: 1 },
+  { value: 45, diff: 1 }, { value: 46, diff: 1 },
+  { value: 49, diff: 1 }, { value: 52, diff: 1 },
+  { value: 54, diff: 1 }, { value: 55, diff: 1 },
+  { value: 56, diff: 1 }, { value: 63, diff: 1 },
+  { value: 64, diff: 1 }, { value: 65, diff: 1 },
+  { value: 66, diff: 1 }, { value: 70, diff: 1 },
+  { value: 75, diff: 1 }, { value: 77, diff: 1 },
+  { value: 78, diff: 1 }, { value: 81, diff: 1 },
 
 
   // LEVEL 2: HARD (34 numbers) - Small primes and trickier numbers < 100
-  { value: 23, diff: 2, core_base: 6 }, { value: 29, diff: 2, core_base: 6 },
-  { value: 31, diff: 2, core_base: 6 }, { value: 37, diff: 2, core_base: 6 },
-  { value: 41, diff: 2, core_base: 6 }, { value: 43, diff: 2, core_base: 6 },
-  { value: 47, diff: 2, core_base: 6 }, { value: 51, diff: 2, core_base: 6 },
-  { value: 53, diff: 2, core_base: 6 }, { value: 57, diff: 2, core_base: 6 },
-  { value: 58, diff: 2, core_base: 6 }, { value: 59, diff: 2, core_base: 6 },
-  { value: 61, diff: 2, core_base: 6 }, { value: 62, diff: 2, core_base: 6 },
-  { value: 67, diff: 2, core_base: 6 }, { value: 68, diff: 2, core_base: 6 },
-  { value: 69, diff: 2, core_base: 6 }, { value: 71, diff: 2, core_base: 6 },
-  { value: 73, diff: 2, core_base: 6 }, { value: 74, diff: 2, core_base: 6 },
-  { value: 76, diff: 2, core_base: 6 }, { value: 79, diff: 2, core_base: 6 },
-  { value: 85, diff: 2, core_base: 6 }, { value: 88, diff: 2, core_base: 6 },
-  { value: 86, diff: 2, core_base: 6 }, { value: 87, diff: 2, core_base: 6 },
-  { value: 89, diff: 2, core_base: 6 }, { value: 93, diff: 2, core_base: 6 },
-  { value: 94, diff: 2, core_base: 6 }, { value: 97, diff: 2, core_base: 6 },
+  { value: 23, diff: 2 }, { value: 29, diff: 2 },
+  { value: 31, diff: 2 }, { value: 37, diff: 2 },
+  { value: 41, diff: 2 }, { value: 43, diff: 2 },
+  { value: 47, diff: 2 }, { value: 51, diff: 2 },
+  { value: 53, diff: 2 }, { value: 57, diff: 2 },
+  { value: 58, diff: 2 }, { value: 59, diff: 2 },
+  { value: 61, diff: 2 }, { value: 62, diff: 2 },
+  { value: 67, diff: 2 }, { value: 68, diff: 2 },
+  { value: 69, diff: 2 }, { value: 71, diff: 2 },
+  { value: 73, diff: 2 }, { value: 74, diff: 2 },
+  { value: 76, diff: 2 }, { value: 79, diff: 2 },
+  { value: 85, diff: 2 }, { value: 88, diff: 2 },
+  { value: 86, diff: 2 }, { value: 87, diff: 2 },
+  { value: 89, diff: 2 }, { value: 93, diff: 2 },
+  { value: 94, diff: 2 }, { value: 97, diff: 2 },
 
   // LEVEL 3: EXPERT (42 numbers) - Composites 100-160
-  { value: 102, diff: 3, core_base: 8 }, { value: 104, diff: 3, core_base: 8 },
-  { value: 105, diff: 3, core_base: 8 }, { value: 106, diff: 3, core_base: 8 },
-  { value: 108, diff: 3, core_base: 8 }, { value: 110, diff: 3, core_base: 8 },
-  { value: 111, diff: 3, core_base: 8 }, { value: 112, diff: 3, core_base: 8 },
-  { value: 114, diff: 3, core_base: 8 }, { value: 115, diff: 3, core_base: 8 },
-  { value: 116, diff: 3, core_base: 8 }, { value: 117, diff: 3, core_base: 8 },
-  { value: 118, diff: 3, core_base: 8 }, { value: 119, diff: 3, core_base: 8 },
-  { value: 121, diff: 3, core_base: 8 }, { value: 122, diff: 3, core_base: 8 },
-  { value: 123, diff: 3, core_base: 8 }, { value: 124, diff: 3, core_base: 8 },
-  { value: 125, diff: 3, core_base: 8 }, { value: 126, diff: 3, core_base: 8 },
-  { value: 128, diff: 3, core_base: 8 }, { value: 129, diff: 3, core_base: 8 },
-  { value: 130, diff: 3, core_base: 8 }, { value: 132, diff: 3, core_base: 8 },
-  { value: 133, diff: 3, core_base: 8 }, { value: 134, diff: 3, core_base: 8 },
-  { value: 135, diff: 3, core_base: 8 }, { value: 136, diff: 3, core_base: 8 },
-  { value: 138, diff: 3, core_base: 8 }, { value: 141, diff: 3, core_base: 8 },
-  { value: 142, diff: 3, core_base: 8 }, { value: 143, diff: 3, core_base: 8 },
-  { value: 145, diff: 3, core_base: 8 }, { value: 146, diff: 3, core_base: 8 },
-  { value: 147, diff: 3, core_base: 8 }, { value: 148, diff: 3, core_base: 8 },
-  { value: 152, diff: 3, core_base: 8 }, { value: 153, diff: 3, core_base: 8 },
-  { value: 154, diff: 3, core_base: 8 }, { value: 155, diff: 3, core_base: 8 },
-  { value: 156, diff: 3, core_base: 8 }, { value: 158, diff: 3, core_base: 8 },
+  { value: 102, diff: 3 }, { value: 104, diff: 3 },
+  { value: 105, diff: 3 }, { value: 106, diff: 3 },
+  { value: 108, diff: 3 }, { value: 110, diff: 3 },
+  { value: 111, diff: 3 }, { value: 112, diff: 3 },
+  { value: 114, diff: 3 }, { value: 115, diff: 3 },
+  { value: 116, diff: 3 }, { value: 117, diff: 3 },
+  { value: 118, diff: 3 }, { value: 119, diff: 3 },
+  { value: 121, diff: 3 }, { value: 122, diff: 3 },
+  { value: 123, diff: 3 }, { value: 124, diff: 3 },
+  { value: 125, diff: 3 }, { value: 126, diff: 3 },
+  { value: 128, diff: 3 }, { value: 129, diff: 3 },
+  { value: 130, diff: 3 }, { value: 132, diff: 3 },
+  { value: 133, diff: 3 }, { value: 134, diff: 3 },
+  { value: 135, diff: 3 }, { value: 136, diff: 3 },
+  { value: 138, diff: 3 }, { value: 141, diff: 3 },
+  { value: 142, diff: 3 }, { value: 143, diff: 3 },
+  { value: 145, diff: 3 }, { value: 146, diff: 3 },
+  { value: 147, diff: 3 }, { value: 148, diff: 3 },
+  { value: 152, diff: 3 }, { value: 153, diff: 3 },
+  { value: 154, diff: 3 }, { value: 155, diff: 3 },
+  { value: 156, diff: 3 }, { value: 158, diff: 3 },
 
   // LEVEL 4: MASTER (28 numbers) - Primes and complex composites 100-180
-  { value: 101, diff: 4, core_base: 10 }, { value: 103, diff: 4, core_base: 10 },
-  { value: 107, diff: 4, core_base: 10 }, { value: 109, diff: 4, core_base: 10 },
-  { value: 113, diff: 4, core_base: 10 }, { value: 127, diff: 4, core_base: 10 },
-  { value: 131, diff: 4, core_base: 10 }, { value: 137, diff: 4, core_base: 10 },
-  { value: 139, diff: 4, core_base: 10 }, { value: 149, diff: 4, core_base: 10 },
-  { value: 151, diff: 4, core_base: 10 }, { value: 157, diff: 4, core_base: 10 },
-  { value: 159, diff: 4, core_base: 10 }, { value: 161, diff: 4, core_base: 10 },
-  { value: 162, diff: 4, core_base: 10 }, { value: 164, diff: 4, core_base: 10 },
-  { value: 165, diff: 4, core_base: 10 }, { value: 166, diff: 4, core_base: 10 },
-  { value: 168, diff: 4, core_base: 10 }, { value: 170, diff: 4, core_base: 10 },
-  { value: 171, diff: 4, core_base: 10 }, { value: 172, diff: 4, core_base: 10 },
-  { value: 174, diff: 4, core_base: 10 }, { value: 175, diff: 4, core_base: 10 },
-  { value: 176, diff: 4, core_base: 10 }, { value: 177, diff: 4, core_base: 10 },
-  { value: 178, diff: 4, core_base: 10 },
+  { value: 101, diff: 4 }, { value: 103, diff: 4 },
+  { value: 107, diff: 4 }, { value: 109, diff: 4 },
+  { value: 113, diff: 4 }, { value: 127, diff: 4 },
+  { value: 131, diff: 4 }, { value: 137, diff: 4 },
+  { value: 139, diff: 4 }, { value: 149, diff: 4 },
+  { value: 151, diff: 4 }, { value: 157, diff: 4 },
+  { value: 159, diff: 4 }, { value: 161, diff: 4 },
+  { value: 162, diff: 4 }, { value: 164, diff: 4 },
+  { value: 165, diff: 4 }, { value: 166, diff: 4 },
+  { value: 168, diff: 4 }, { value: 170, diff: 4 },
+  { value: 171, diff: 4 }, { value: 172, diff: 4 },
+  { value: 174, diff: 4 }, { value: 175, diff: 4 },
+  { value: 176, diff: 4 }, { value: 177, diff: 4 },
+  { value: 178, diff: 4 },
 
   // LEVEL 5: LEGEND (30 numbers) - Primes and very large numbers nearing 200
-  { value: 163, diff: 5, core_base: 12 }, { value: 167, diff: 5, core_base: 12 },
-  { value: 169, diff: 5, core_base: 12 }, { value: 173, diff: 5, core_base: 12 },
-  { value: 179, diff: 5, core_base: 12 }, { value: 181, diff: 5, core_base: 12 },
-  { value: 182, diff: 5, core_base: 12 }, { value: 183, diff: 5, core_base: 12 },
-  { value: 184, diff: 5, core_base: 12 }, { value: 185, diff: 5, core_base: 12 },
-  { value: 186, diff: 5, core_base: 12 }, { value: 187, diff: 5, core_base: 12 },
-  { value: 188, diff: 5, core_base: 12 }, { value: 189, diff: 5, core_base: 12 },
-  { value: 190, diff: 5, core_base: 12 }, { value: 191, diff: 5, core_base: 12 },
-  { value: 192, diff: 5, core_base: 12 }, { value: 193, diff: 5, core_base: 12 },
-  { value: 194, diff: 5, core_base: 12 }, { value: 195, diff: 5, core_base: 12 },
-  { value: 196, diff: 5, core_base: 12 }, { value: 197, diff: 5, core_base: 12 },
-  { value: 198, diff: 5, core_base: 12 }, { value: 199, diff: 5, core_base: 12 }
+  { value: 163, diff: 5 }, { value: 167, diff: 5 },
+  { value: 169, diff: 5 }, { value: 173, diff: 5 },
+  { value: 179, diff: 5 }, { value: 181, diff: 5 },
+  { value: 182, diff: 5 }, { value: 183, diff: 5 },
+  { value: 184, diff: 5 }, { value: 185, diff: 5 },
+  { value: 186, diff: 5 }, { value: 187, diff: 5 },
+  { value: 188, diff: 5 }, { value: 189, diff: 5 },
+  { value: 190, diff: 5 }, { value: 191, diff: 5 },
+  { value: 192, diff: 5 }, { value: 193, diff: 5 },
+  { value: 194, diff: 5 }, { value: 195, diff: 5 },
+  { value: 196, diff: 5 }, { value: 197, diff: 5 },
+  { value: 198, diff: 5 }, { value: 199, diff: 5 }
 ];
 
 /**
@@ -116,21 +116,15 @@ export const GAME_PARAMS = {
   GACHA_TARGETS_THRESHOLD: 3, // Targets cleared to trigger a gacha draw
   STORAGE_SIZE: 4,          // Number of item slots
   COMBO_SCORE_BONUS: 20,    // Points per combo
-  BASE_SCORE_MULTIPLIER: 50, // Points per core_base unit
-
-  // 时间倍率难度配置
-  TIMER_DIFFICULTY: {
-    BASE_MULTIPLIER: 18,     // 初始时间倍率（秒）
-    START_SCORE: 20000,      // 开始增加难度的分数
-    INTERVAL: 5000,         // 分数间隔
-    DECREASE_AMOUNT: 0.5,   // 每次减少的秒数
-    MIN_MULTIPLIER: 14       // 最低时间倍率
-  },
+  // 6个等级对应的得分基础分 (EASY, NORMAL, HARD, EXPERT, MASTER, LEGEND)
+  LEVEL_BASE_SCORES: [150, 300, 400, 600, 900, 1500],
+  // 6个等级对应的时间基础分 (秒)
+  LEVEL_BASE_TIMES: [3, 3, 3.5, 4, 6, 8],
 
   // 得分与奖励配置
   SCORE_REWARDS: {
     COMBO_BONUS: 20,         // 每层连击奖励分数
-    MAX_COMBO_BONUS: 160,    // 连击奖励上限
+    MAX_COMBO_BONUS: 200,    // 连击奖励上限
     SPEED_MULTIPLIERS: [
       { threshold: 0.7, multiplier: 1.5, label: 'SUPER FAST' }, // 剩余时间 > 70%
       { threshold: 0.4, multiplier: 1.2, label: 'FAST' },       // 剩余时间 > 40%
@@ -142,37 +136,19 @@ export const GAME_PARAMS = {
   TIMER_LIMITS: {
     GLOBAL_MAX: 999,        // 全局最大时间上限（防止无限延时）
     DEFAULT_MAX: 100,       // 默认/教程期间最大时间
+  },
+
+  // 动态时间倍率配置 (最终时间 = 基础秒数 * 当前倍率)
+  TIMER_MULTIPLIER: {
+    BASE: 17,    // 初始倍率 (对应动态难度等级 0)
+    DECREASE: 1, // 每升一级动态难度，倍率减少量
+    MIN: 13,     // 最低倍率下限
   }
 };
 
-/** 根据分数获取当前的时间倍率 */
-export const getTimerMultiplier = (score: number): number => {
-  const { TIMER_DIFFICULTY } = GAME_PARAMS;
-  const { BASE_MULTIPLIER, START_SCORE, INTERVAL, DECREASE_AMOUNT, MIN_MULTIPLIER } = TIMER_DIFFICULTY;
-
-  if (score < START_SCORE) {
-    return BASE_MULTIPLIER;
-  }
-
-  const increments = Math.floor((score - START_SCORE) / INTERVAL);
-  const newMultiplier = BASE_MULTIPLIER - (increments * DECREASE_AMOUNT);
-
-  return Math.max(newMultiplier, MIN_MULTIPLIER);
-};
-
-/** 难度提升阈值配置 */
-export const DIFFICULTY_BANNER_CONFIG = {
-  START_SCORE: 20000,   // 首次难度提升分数
-  INTERVAL: 10000,      // 每10000分提升一次
-  MAX_LEVEL: 4,         // 最大难度等级（60000分后不再显示横幅）
-  DISPLAY_SECONDS: 2.1 // 横幅显示秒数
-};
-
-/** 根据分数获取当前难度等级（每10000分一级，上限为MAX_LEVEL） */
-export const getDifficultyLevel = (score: number): number => {
-  const { START_SCORE, INTERVAL, MAX_LEVEL } = DIFFICULTY_BANNER_CONFIG;
-  if (score < START_SCORE) return 0;
-  return Math.min(Math.floor((score - START_SCORE) / INTERVAL) + 1, MAX_LEVEL);
+/** UI 显示配置 */
+export const UI_CONFIG = {
+  TOAST_DISPLAY_MS: 2100, // 提示信息显示毫秒数
 };
 
 /**
@@ -186,13 +162,10 @@ export const DYNAMIC_DIFFICULTY_CONFIG = {
   CHECK_INTERVAL: 3000,         // 每5000分检查一次
 
   // 难度等级参数
-  BASE_TIMER_MULTIPLIER: 17,    // 默认时间倍率（最低难度）
   BASE_ITEM_CHANCE: 0.8,        // 默认抽卡概率（最低难度 80%）
-  TIMER_DECREASE: 0.5,          // 每增加1级难度，时间倍率减少0.5
-  CHANCE_DECREASE: 0.05,        // 每增加1级难度，抽卡概率降低0.05
-  MIN_TIMER_MULTIPLIER: 13,     // 最低时间倍率
+  CHANCE_DECREASE: 0.1,        // 每增加1级难度，抽卡概率降低0.1
   MIN_ITEM_CHANCE: 0.4,         // 最低抽卡概率 (40%)
-  MAX_LEVEL: 8,                 // 最大难度等级
+  MAX_LEVEL: 4,                 // 最大难度等级
 
   // 道具数量阈值
   ITEM_COUNT_THRESHOLD_HIGH: 3,     // ≥3个道具
@@ -210,8 +183,8 @@ export const DYNAMIC_DIFFICULTY_CONFIG = {
 
 /** 根据难度等级获取时间倍率 */
 export const getTimerMultiplierByLevel = (level: number): number => {
-  const { BASE_TIMER_MULTIPLIER, TIMER_DECREASE, MIN_TIMER_MULTIPLIER } = DYNAMIC_DIFFICULTY_CONFIG;
-  return Math.max(BASE_TIMER_MULTIPLIER - (level * TIMER_DECREASE), MIN_TIMER_MULTIPLIER);
+  const { BASE, DECREASE, MIN } = GAME_PARAMS.TIMER_MULTIPLIER;
+  return Math.max(BASE - (level * DECREASE), MIN);
 };
 
 /** 根据难度等级获取抽卡概率 */

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Cell, Operator, Position, GameState } from '../types';
-import { GAME_PARAMS, DIFF_UI, NUM_HEIGHT, OP_HEIGHT, OPERATORS, createCell, generateRandomId, getTargetForAbsoluteIndex, setTargetScore, SEQUENCE_PATTERNS, getSequenceOrder, getRandomEasyTarget, getDifficultyLevel, DYNAMIC_DIFFICULTY_CONFIG, getTimerMultiplierByLevel, getItemChanceByLevel } from '../gameConfig';
+import { GAME_PARAMS, DIFF_UI, NUM_HEIGHT, OP_HEIGHT, OPERATORS, createCell, generateRandomId, getTargetForAbsoluteIndex, setTargetScore, SEQUENCE_PATTERNS, getSequenceOrder, getRandomEasyTarget, DYNAMIC_DIFFICULTY_CONFIG, getTimerMultiplierByLevel, getItemChanceByLevel } from '../gameConfig';
 import { FEATURES } from '../featureFlags';
 import { Translations } from '../i18n';
 import { playFusionSound, playSuccessSound, playErrorSound } from '../services/soundEffects';
@@ -52,7 +52,6 @@ export function useGameCore(t: Translations) {
             lastGachaThreshold: 0,
             timePenaltyCount: 0,
             dogAttackCount: 0,
-            lastDifficultyLevel: 0,
             doubleScoreCount: 0,
             timeLeft: GAME_PARAMS.TIMER_LIMITS.DEFAULT_MAX // 初始时间
         });
@@ -77,7 +76,6 @@ export function useGameCore(t: Translations) {
             lastGachaThreshold: 0,
             timePenaltyCount: 0,
             dogAttackCount: 0,
-            lastDifficultyLevel: 0,
             doubleScoreCount: 0,
             timeLeft: GAME_PARAMS.TIMER_LIMITS.DEFAULT_MAX // 教程初始时间
         });
@@ -174,7 +172,7 @@ export function useGameCore(t: Translations) {
                     // 播放成功音效并触发分数弹出
                     playSuccessSound();
                     // 1. 基础分 (向左移动至红框区域，保持左对齐)
-                    const basePoints = prev.currentTarget.core_base * GAME_PARAMS.BASE_SCORE_MULTIPLIER;
+                    const basePoints = GAME_PARAMS.LEVEL_BASE_SCORES[prev.currentTarget.diff] || 0;
                     triggerScorePopup(basePoints, 66, 14, 'base');
 
                     // 2. 连击分 (对齐同一个左起点)
@@ -303,8 +301,7 @@ export function useGameCore(t: Translations) {
                     timePenaltyCount: newTimePenaltyCount,
                     doubleScoreCount: newDoubleScoreCount,
                     dogAttackCount: (isMatch && dogAttackCount > 0) ? 0 : dogAttackCount,
-                    lastDifficultyLevel: isMatch ? getDifficultyLevel(score) : prev.lastDifficultyLevel,
-                    timeLeft: isMatch ? (currentTarget.core_base * getTimerMultiplierByLevel(difficultyLevel)) : prev.timeLeft // 目标匹配时根据新目标重置时间
+                    timeLeft: isMatch ? (GAME_PARAMS.LEVEL_BASE_TIMES[currentTarget.diff] * getTimerMultiplierByLevel(difficultyLevel)) : prev.timeLeft // 目标匹配时根据新目标重置时间
                 };
             });
             setIsSynthesizing(false);

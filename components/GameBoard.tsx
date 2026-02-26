@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Cell, GameState } from '../types';
 import { playTapSound } from '../services/soundEffects';
 import Toast from './Toast';
-import { DIFFICULTY_BANNER_CONFIG } from '../gameConfig';
+import { UI_CONFIG } from '../gameConfig';
 
 interface GameBoardProps {
     gameState: GameState;
@@ -134,7 +134,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onCellClick, message, 
                 <Toast
                     message={message}
                     onDismiss={onDismissMessage}
-                    duration={DIFFICULTY_BANNER_CONFIG.DISPLAY_SECONDS * 1000}
+                    duration={UI_CONFIG.TOAST_DISPLAY_MS}
                 />
             </div>
         </div>

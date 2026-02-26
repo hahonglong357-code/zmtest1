@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FEATURES } from './featureFlags';
 import { TRANSLATIONS, Language } from './i18n';
-import { GAME_PARAMS, ITEM_CONFIG, getTimerMultiplierByLevel, getItemChanceByLevel, DIFFICULTY_BANNER_CONFIG } from './gameConfig';
+import { GAME_PARAMS, ITEM_CONFIG, getTimerMultiplierByLevel, getItemChanceByLevel, UI_CONFIG } from './gameConfig';
 import { userAnalytics } from './services/userAnalytics';
 
 // Hooks
@@ -50,7 +50,7 @@ const App: React.FC = () => {
   const currentDifficultyLevel = game.difficultyLevel || 0;
   const currentTimerMultiplier = getTimerMultiplierByLevel(currentDifficultyLevel);
   const timerDuration = (game.gameState && game.gameState.currentTarget && game.gameState.tutorialStep === null)
-    ? game.gameState.currentTarget.core_base * currentTimerMultiplier * (game.gameState.timePenaltyCount > 0 ? 0.5 : 1)
+    ? GAME_PARAMS.LEVEL_BASE_TIMES[game.gameState.currentTarget.diff] * currentTimerMultiplier * (game.gameState.timePenaltyCount > 0 ? 0.5 : 1)
     : GAME_PARAMS.TIMER_LIMITS.DEFAULT_MAX; // 教程期间或无目标时使用配置值
 
   // 简化计时器激活条件，确保游戏开始后立即激活
@@ -478,22 +478,24 @@ const App: React.FC = () => {
       <ScorePopupOverlay popups={game.scorePopups} />
 
       {/* Debug Window */}
-      <div className="fixed bottom-4 left-4 z-[9999] pointer-events-none">
-        <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-3 text-[10px] text-white font-mono space-y-1 shadow-2xl">
-          <div className="flex justify-between gap-4">
-            <span className="text-gray-400">DIFF LEVEL:</span>
-            <span className="font-bold text-blue-400">{currentDifficultyLevel}</span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-gray-400">ITEM CHANCE:</span>
-            <span className="font-bold text-emerald-400">{(getItemChanceByLevel(currentDifficultyLevel) * 100).toFixed(0)}%</span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-gray-400">TIME MULT:</span>
-            <span className="font-bold text-orange-400">{currentTimerMultiplier.toFixed(1)}x</span>
+      {FEATURES.DEBUG && (
+        <div className="fixed bottom-4 left-4 z-[9999] pointer-events-none">
+          <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-3 text-[10px] text-white font-mono space-y-1 shadow-2xl">
+            <div className="flex justify-between gap-4">
+              <span className="text-gray-400">DIFF LEVEL:</span>
+              <span className="font-bold text-blue-400">{currentDifficultyLevel}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-gray-400">ITEM CHANCE:</span>
+              <span className="font-bold text-emerald-400">{(getItemChanceByLevel(currentDifficultyLevel) * 100).toFixed(0)}%</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-gray-400">TIME MULT:</span>
+              <span className="font-bold text-orange-400">{currentTimerMultiplier.toFixed(1)}x</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

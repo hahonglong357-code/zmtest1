@@ -9,4 +9,5 @@ export const FEATURES = {
     TIMER: true,        // 计时器（关闭=无限时间）
     STORAGE: true,      // 储物格系统
     COMBO: true,        // 连击加分
+    DEBUG: false,        // 调试窗口
 };

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DIFFICULTY_BANNER_CONFIG } from '../gameConfig';
+import { UI_CONFIG } from '../gameConfig';
 
 interface ToastProps {
     message: string | null;
@@ -15,7 +15,7 @@ const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration }) => {
         return errorKeywords.some(kw => message.includes(kw));
     }, [message]);
 
-    const displayDuration = duration ?? (isError ? 1500 : DIFFICULTY_BANNER_CONFIG.DISPLAY_SECONDS * 1000);
+    const displayDuration = duration ?? (isError ? 1500 : UI_CONFIG.TOAST_DISPLAY_MS);
 
     return (
         <AnimatePresence>
