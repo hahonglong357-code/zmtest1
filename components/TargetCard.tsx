@@ -65,8 +65,14 @@ const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, c
 
     const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
 
+    const isTutorialFocus = gameState.tutorialStep !== null && gameState.tutorialStep < 3;
+
     return (
-        <motion.div layout id="target-card" className={`relative w-full bg-white/80 ios-blur ios-shadow rounded-2xl p-3 flex flex-col items-center border border-white/50 transition-all duration-300 ${gameState.tutorialStep !== null && gameState.tutorialStep < 3 ? 'z-[1001] !bg-white scale-105 ring-4 ring-blue-400 shadow-2xl' : ''}`}>
+        <motion.div
+            layout
+            id="target-card"
+            className={`relative w-full bg-white/80 ios-blur ios-shadow rounded-2xl p-3 flex flex-col items-center border border-white/50 transition-all duration-500 ${isTutorialFocus ? 'z-[1001] !bg-white scale-[1.02] shadow-[0_0_50px_rgba(59,130,246,0.25)] ring-1 ring-blue-500/30' : ''}`}
+        >
             {/* 纸屑效果 */}
             <AnimatePresence>
                 {showConfetti && (
@@ -97,21 +103,36 @@ const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, c
                     }}
                     whileInView={{ scale: [1, 1.1, 1] }}
                     viewport={{ once: false }}
-                    className={`text-6xl font-black tracking-tighter leading-none ${currentDiff ? currentDiff.color : 'text-blue-600'}`}
+                    className={`text-6xl font-black tracking-tighter leading-none relative ${currentDiff ? currentDiff.color : 'text-blue-600'}`}
                 >
                     {gameState.currentTarget.value}
+                    {gameState.tutorialStep === 0 && (
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute -inset-4 rounded-full border-4 border-blue-400/30 -z-10"
+                        />
+                    )}
                 </motion.div>
                 {/* 移除难度标识 (普通/困难等) */}
             </div>
 
             {/* 下一个目标 */}
-            <div className={`mt-2 flex items-center gap-2 px-3 py-1 rounded-full transition-all ${gameState.tutorialStep === 1 ? 'bg-blue-600 !text-white ring-4 ring-blue-300 scale-105' : 'text-gray-400 bg-gray-100/40'}`}>
+            <div className={`mt-2 flex items-center gap-2 px-3 py-1 rounded-full transition-all relative ${gameState.tutorialStep === 1 ? 'bg-blue-600 !text-white ring-4 ring-blue-300/50 scale-105 z-10 shadow-lg shadow-blue-500/30' : 'text-gray-400 bg-gray-100/40'}`}>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${gameState.tutorialStep === 1 ? 'text-blue-100' : 'text-gray-400'}`}>NEXT</span>
                 <span className="text-base font-bold">{gameState.nextTarget.value}</span>
+                {gameState.tutorialStep === 1 && (
+                    <motion.div
+                        animate={{ opacity: [0.4, 0.8, 0.4] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="absolute inset-0 rounded-full ring-2 ring-blue-400 -z-10"
+                    />
+                )}
             </div>
 
             {/* 倒计时进度条 - 优化设计 */}
-            <div className="w-full mt-3 px-1">
+            <div className={`w-full mt-3 px-1 transition-all duration-500 p-2 rounded-xl ${gameState.tutorialStep === 2 ? 'bg-blue-50 ring-2 ring-blue-400/50 scale-[1.02] shadow-sm' : ''}`}>
                 <div className="flex justify-between items-end mb-1">
                     <div className="flex flex-col">
                         <div className="flex items-center gap-1 mt-0.5">

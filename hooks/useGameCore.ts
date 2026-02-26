@@ -205,11 +205,7 @@ export function useGameCore(t: Translations) {
                     if (FEATURES.COMBO) combo += 1;
                     totalTargetsCleared += 1;
 
-                    // 检查难度是否提升（每10000分提升一次）
-                    const currentDifficultyLevel = getDifficultyLevel(score);
-                    if (currentDifficultyLevel > prev.lastDifficultyLevel) {
-                        setMessage(t.difficulty_increase_msg);
-                    }
+                    // 检查是否完成了一个序列，完成后根据当前分数更新序列配置
 
                     // 检查是否完成了一个序列，完成后根据当前分数更新序列配置
                     const mainTargetsCleared = totalTargetsCleared - 3; // 去掉热身阶段的3个

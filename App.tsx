@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { FEATURES } from './featureFlags';
 import { TRANSLATIONS, Language } from './i18n';
 import { GAME_PARAMS, ITEM_CONFIG, getTimerMultiplierByLevel, getItemChanceByLevel, DIFFICULTY_BANNER_CONFIG } from './gameConfig';
@@ -347,16 +347,23 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      {/* Tutorial dark overlay */}
+      {/* Tutorial dark overlay with spotlight feel */}
       <AnimatePresence>
-        {game.gameState.tutorialStep !== null && <div className="fixed inset-0 z-[900] bg-black/70 pointer-events-none" />}
+        {game.gameState.tutorialStep !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[900] bg-black/70 ios-blur-sm pointer-events-none"
+          />
+        )}
       </AnimatePresence>
 
-      {/* Target Card */}
-      <div className="w-full max-w-md relative mb-0 shrink-0 transform -translate-y-1">
+      {/* Target Card - 动态提升教程层级 */}
+      <div className={`w-full max-w-md relative mb-0 shrink-0 transform -translate-y-1 transition-all duration-300 ${game.gameState.tutorialStep !== null && game.gameState.tutorialStep < 3 ? 'z-[1001]' : 'z-10'}`}>
         <TargetCard gameState={game.gameState} timeLeft={timer.timeLeft} maxTime={timerDuration} currentDiff={game.currentDiff} t={t} />
-        {game.gameState.tutorialStep !== null && game.gameState.tutorialStep >= 3 && (
-          <TutorialOverlay tutorialStep={game.gameState.tutorialStep} hintText={game.getTutorialHintText()} onNextStep={game.nextTutorialStep} t={t} />
+        {game.gameState.tutorialStep !== null && game.gameState.tutorialStep < 3 && (
+          <TutorialOverlay tutorialStep={game.gameState.tutorialStep} hintText={game.getTutorialHintText()} onNextStep={game.nextTutorialStep} t={t} position="bottom" />
         )}
       </div>
 
@@ -371,11 +378,17 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      <div className={`w-full max-w-md relative flex-grow flex flex-col justify-start mt-[-4px] overflow-visible`}>
-        <GameBoard gameState={game.gameState} onCellClick={(col, row) => game.handleCellClick(col, row, timer.timeLeft, timerDuration)} />
-        {game.gameState.tutorialStep !== null && game.gameState.tutorialStep < 3 && (
-          <div className="absolute inset-0 z-[1002] flex items-center justify-center p-4">
-            <TutorialOverlay tutorialStep={game.gameState.tutorialStep} hintText={game.getTutorialHintText()} onNextStep={game.nextTutorialStep} t={t} />
+      {/* Game Board - 动态提升教程层级 */}
+      <div className={`w-full max-w-md relative flex-grow flex flex-col justify-start mt-[-4px] overflow-visible transition-all duration-300 ${game.gameState.tutorialStep !== null && game.gameState.tutorialStep >= 3 ? 'z-[1001]' : 'z-10'}`}>
+        <GameBoard
+          gameState={game.gameState}
+          onCellClick={(col, row) => game.handleCellClick(col, row, timer.timeLeft, timerDuration)}
+          message={game.message}
+          onDismissMessage={() => game.setMessage(null)}
+        />
+        {game.gameState.tutorialStep !== null && game.gameState.tutorialStep >= 3 && (
+          <div className="absolute top-0 left-0 right-0 z-[1002] flex items-center justify-center p-4">
+            <TutorialOverlay tutorialStep={game.gameState.tutorialStep} hintText={game.getTutorialHintText()} onNextStep={game.nextTutorialStep} t={t} position="top" />
           </div>
         )}
       </div>
@@ -463,7 +476,7 @@ const App: React.FC = () => {
 
       {FEATURES.LEADERBOARD && <LeaderboardOverlay isOpen={showLeaderboard} leaderboard={leaderboard} onClose={() => setShowLeaderboard(false)} t={t} />}
       <ScorePopupOverlay popups={game.scorePopups} />
-      <Toast message={game.message} onDismiss={() => game.setMessage(null)} duration={DIFFICULTY_BANNER_CONFIG.DISPLAY_SECONDS * 1000} />
+      <ScorePopupOverlay popups={game.scorePopups} />
     </div>
   );
 };

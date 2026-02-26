@@ -51,7 +51,7 @@ export const TRANSLATIONS = {
         feedback_success: "感谢您的反馈！",
         feedback_error: "提交失败，请重试",
         div_zero_err: "除数不能为零",
-        not_divisible_err: "不能整除",
+        not_divisible_err: "整除失败",
         negative_err: "不能得到负数",
         tutorial_steps: [
             "嘿！欢迎来到 Beyond 24！这是你的目标数字，你需要用棋盘上的数算出它。",

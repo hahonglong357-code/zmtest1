@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DIFFICULTY_BANNER_CONFIG } from '../gameConfig';
 
@@ -8,20 +8,47 @@ interface ToastProps {
     duration?: number;
 }
 
-const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration }) => (
-    <AnimatePresence>
-        {message && (
-            <motion.div
-                initial={{ opacity: 0, scale: 0.8, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="fixed inset-x-0 top-1/2 -translate-y-1/2 mx-auto z-[4000] w-fit max-w-[80vw] bg-gray-900/95 text-white text-center font-bold px-10 py-6 rounded-3xl ios-shadow ios-blur"
-                onAnimationComplete={() => setTimeout(onDismiss, duration ?? DIFFICULTY_BANNER_CONFIG.DISPLAY_SECONDS * 1000)}
-            >
-                <div className="text-4xl mb-3">✨</div><div className="text-lg">{message}</div>
-            </motion.div>
-        )}
-    </AnimatePresence>
-);
+const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration }) => {
+    const isError = useMemo(() => {
+        if (!message) return false;
+        const errorKeywords = ['不能', '零', 'err', 'Not', 'Cannot', 'Invalid'];
+        return errorKeywords.some(kw => message.includes(kw));
+    }, [message]);
+
+    const displayDuration = duration ?? (isError ? 1500 : DIFFICULTY_BANNER_CONFIG.DISPLAY_SECONDS * 1000);
+
+    return (
+        <AnimatePresence>
+            {message && (
+                <div className="absolute inset-0 flex items-center justify-center z-[5000] pointer-events-none p-4">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{
+                            opacity: 1,
+                            y: 0,
+                            scale: 1.02,
+                        }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 30
+                        }}
+                        className="pointer-events-auto flex items-center gap-3 px-6 py-3 rounded-2xl shadow-xl backdrop-blur-3xl border border-white/10 bg-[#1c1c1e]/90 text-white"
+                        onAnimationComplete={() => {
+                            const timer = setTimeout(onDismiss, displayDuration);
+                            return () => clearTimeout(timer);
+                        }}
+                    >
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-blue-500/20">
+                            <i className="fas fa-info-circle text-blue-400 text-xs"></i>
+                        </div>
+                        <span className="text-[13px] font-bold tracking-tight whitespace-nowrap">{message}</span>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
 
 export default Toast;
