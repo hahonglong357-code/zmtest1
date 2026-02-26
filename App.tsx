@@ -55,7 +55,7 @@ const App: React.FC = () => {
 
   // 简化计时器激活条件，确保游戏开始后立即激活
   const timerActive = FEATURES.TIMER && !!game.gameState && !game.gameState.isGameOver && !game.gameState.isPaused &&
-    game.gameState.tutorialStep === null;
+    game.gameState.tutorialStep === null && !gacha.isOpen;
 
   // 计算有效的剩余时间
   // 优先级：游戏状态中的时间 > 保存的游戏状态中的时间 > 基于目标难度计算的时间
@@ -476,7 +476,24 @@ const App: React.FC = () => {
 
       {FEATURES.LEADERBOARD && <LeaderboardOverlay isOpen={showLeaderboard} leaderboard={leaderboard} onClose={() => setShowLeaderboard(false)} t={t} />}
       <ScorePopupOverlay popups={game.scorePopups} />
-      <ScorePopupOverlay popups={game.scorePopups} />
+
+      {/* Debug Window */}
+      <div className="fixed bottom-4 left-4 z-[9999] pointer-events-none">
+        <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-3 text-[10px] text-white font-mono space-y-1 shadow-2xl">
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-400">DIFF LEVEL:</span>
+            <span className="font-bold text-blue-400">{currentDifficultyLevel}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-400">ITEM CHANCE:</span>
+            <span className="font-bold text-emerald-400">{(getItemChanceByLevel(currentDifficultyLevel) * 100).toFixed(0)}%</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-400">TIME MULT:</span>
+            <span className="font-bold text-orange-400">{currentTimerMultiplier.toFixed(1)}x</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
