@@ -16,11 +16,9 @@ export function useTimer({ isActive, duration, onTimeUp, resetKey, initialTimeLe
     const prevResetKeyRef = useRef<number | undefined>(resetKey);
     const isRunningRef = useRef(false);
 
-    // 当 duration 变化时，重置时间
+    // 当 duration 变化时，如果当前时间超过总时长（通常发生在难度提升或时间减半惩罚时），进行修正
     useEffect(() => {
-        if (initialTimeLeft === undefined) {
-            setTimeLeft(duration);
-        }
+        setTimeLeft(prev => Math.min(prev, duration));
     }, [duration]);
 
     // 当 resetKey 变化时，重置时间

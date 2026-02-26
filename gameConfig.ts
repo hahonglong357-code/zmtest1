@@ -187,11 +187,11 @@ export const DYNAMIC_DIFFICULTY_CONFIG = {
 
   // 难度等级参数
   BASE_TIMER_MULTIPLIER: 17,    // 默认时间倍率（最低难度）
-  BASE_ITEM_CHANCE: 0.1,        // 默认抽卡概率（最低难度）
+  BASE_ITEM_CHANCE: 0.8,        // 默认抽卡概率（最低难度 80%）
   TIMER_DECREASE: 0.5,          // 每增加1级难度，时间倍率减少0.5
   CHANCE_DECREASE: 0.05,        // 每增加1级难度，抽卡概率降低0.05
   MIN_TIMER_MULTIPLIER: 13,     // 最低时间倍率
-  MIN_ITEM_CHANCE: 0.5,         // 最低抽卡概率
+  MIN_ITEM_CHANCE: 0.4,         // 最低抽卡概率 (40%)
   MAX_LEVEL: 8,                 // 最大难度等级
 
   // 道具数量阈值
@@ -202,9 +202,9 @@ export const DYNAMIC_DIFFICULTY_CONFIG = {
   // 概率配置：[增加, 维持, 降低] 的概率分布
   PROBS: {
     HIGH: [0.9, 0.1, 0.0],     // ≥3个道具
-    MID_HIGH: [0.6, 0.4, 0.0], // =2个道具
-    MID: [0.0, 0.3, 0.7],      // =1个道具
-    ZERO: [0.0, 0.2, 0.8]      // =0个道具
+    MID_HIGH: [0.8, 0.2, 0.0], // =2个道具
+    MID: [0.1, 0.3, 0.6],      // =1个道具
+    ZERO: [0.0, 0.3, 0.7]      // =0个道具
   }
 };
 
