@@ -18,7 +18,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ tutorialStep, hintTex
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className={`absolute ${position === 'bottom' ? 'top-full mt-6' : 'bottom-full mb-6'} left-1/2 -translate-x-1/2 z-[2000] w-[90%] max-w-[320px] pointer-events-auto`}
+            className={`absolute ${position === 'bottom' ? 'top-full mt-6' : 'bottom-full mb-6'} left-1/2 -translate-x-1/2 z-[2000] w-[calc(100vw-48px)] max-w-[320px] pointer-events-auto`}
         >
             {/* 气泡尖角 */}
             <div

@@ -40,10 +40,10 @@ const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration }) => {
                             return () => clearTimeout(timer);
                         }}
                     >
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-blue-500/20">
-                            <i className="fas fa-info-circle text-blue-400 text-xs"></i>
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-blue-500/20">
+                            <i className="fas fa-info-circle text-blue-400 text-sm"></i>
                         </div>
-                        <span className="text-[13px] font-bold tracking-tight whitespace-nowrap">{message}</span>
+                        <span className="text-[15px] font-bold tracking-tight whitespace-nowrap">{message}</span>
                     </motion.div>
                 </div>
             )}
