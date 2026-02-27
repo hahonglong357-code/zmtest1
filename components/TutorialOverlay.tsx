@@ -21,7 +21,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ tutorialStep, hintTex
             className={`absolute ${position === 'bottom' ? 'top-full mt-6' : 'bottom-full mb-6'} left-0 right-0 z-[2000] flex justify-center pointer-events-none`}
         >
             {/* 提示卡片内容容器 */}
-            <div className="relative w-[calc(100vw-32px)] max-w-[320px] pointer-events-auto">
+            <div className={`relative w-[calc(100vw-32px)] max-w-[320px] ${tutorialStep >= 4 ? 'pointer-events-none' : 'pointer-events-auto'}`}>
                 {/* 气泡尖角 */}
                 <div
                     className={`absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-tr-sm rotate-45 border-black/5 ${position === 'bottom' ? '-top-2 bg-white/95 border-l border-t' : '-bottom-2 bg-[#1c1c1e] border-r border-b'}`}
@@ -58,7 +58,7 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ tutorialStep, hintTex
                                     {t.tutorial_next}
                                 </button>
                             ) : (
-                                <div className="flex items-center gap-2 text-blue-500 font-black animate-pulse text-[12px] uppercase tracking-wider">
+                                <div className="flex items-center gap-2 text-white font-black animate-pulse text-[12px] uppercase tracking-wider">
                                     <i className="fas fa-hand-point-down"></i>
                                     <span>{t.tutorial_click_hint}</span>
                                 </div>

@@ -108,16 +108,23 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onCellClick, message, 
                                     <>
                                         {/* 引导声呐环 */}
                                         <motion.div
-                                            initial={{ scale: 1, opacity: 0.5 }}
-                                            animate={{ scale: 1.4, opacity: 0 }}
-                                            transition={{ duration: 1.5, repeat: Infinity }}
-                                            className="absolute inset-0 rounded-[18px] border-4 border-blue-500"
+                                            animate={{
+                                                scale: [1, 1.4],
+                                                opacity: [0, 0.8, 0]
+                                            }}
+                                            transition={{
+                                                duration: 1.5,
+                                                repeat: Infinity,
+                                                times: [0, 0.2, 1],
+                                                ease: "easeOut"
+                                            }}
+                                            className="absolute inset-0 rounded-[18px] border-2 border-blue-400 z-[1000] pointer-events-none"
                                         />
                                         {/* 指导小手 */}
                                         <motion.div
                                             animate={{ y: [0, -8, 0], scale: [1, 1.1, 1] }}
                                             transition={{ duration: 1, repeat: Infinity }}
-                                            className="absolute -top-10 left-1/2 -translate-x-1/2 text-blue-600 text-3xl drop-shadow-md z-20"
+                                            className="absolute -top-10 left-1/2 -translate-x-1/2 text-white text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] z-[1002]"
                                         >
                                             <i className="fas fa-hand-point-down"></i>
                                         </motion.div>

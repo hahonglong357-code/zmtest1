@@ -397,7 +397,7 @@ const App: React.FC = () => {
           onDismissMessage={() => game.setMessage(null)}
         />
         {game.gameState.tutorialStep !== null && game.gameState.tutorialStep >= 3 && (
-          <div className="absolute top-0 left-0 right-0 z-[1002] flex items-center justify-center p-4">
+          <div className="absolute top-0 left-0 right-0 z-[1002] flex items-center justify-center p-4 pointer-events-none">
             <TutorialOverlay tutorialStep={game.gameState.tutorialStep} hintText={game.getTutorialHintText()} onNextStep={game.nextTutorialStep} t={t} position="top" />
           </div>
         )}
