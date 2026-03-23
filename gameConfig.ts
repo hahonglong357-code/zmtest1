@@ -388,9 +388,9 @@ export const SEQUENCE_PATTERNS = {
     steps: [
       { diffGroup: 'EASY', description: '第一个从难度0中取' },
       { diffGroup: 'NORMAL', description: '第二个从难度1中取' },
-      { diffGroup: 'HARD', description: '第三个从难度2中取' },
-      { diffGroup: 'EASY', description: '第四个从难度0中取' },
-      { diffGroup: 'HARD', description: '第五个从难度2中取' },
+      { diffGroup: 'NORMAL', description: '第三个从难度1中取' },
+      { diffGroup: 'HARD', description: '第四个从难度2中取' },
+      { diffGroup: 'EASY', description: '第五个从难度0中取' },
       { diffGroup: 'EXPERT', description: '第六个从难度3中取' },
     ]
   } as TargetSequenceConfig,
