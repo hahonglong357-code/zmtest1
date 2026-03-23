@@ -8,102 +8,46 @@ import { TargetData, ItemType, Cell, Operator } from './types';
  * diff: 0=Easy, 1=Normal, 2=Hard, 3=Expert, 4=Master, 5=Legend
  */
 export const TARGET_CATALOG: TargetData[] = [
-  // LEVEL 0: EASY (9 numbers) - Simple numbers <= 60
-  { value: 12, diff: 0 }, { value: 20, diff: 0 },
-  { value: 24, diff: 0 }, { value: 30, diff: 0 },
-  { value: 36, diff: 0 }, { value: 40, diff: 0 },
-  { value: 48, diff: 0 }, { value: 50, diff: 0 },
-  { value: 60, diff: 0 },
+  // LEVEL 0: EASY (20 numbers) - 40以内，两个9以内数字相乘
+  { value: 12, diff: 0 }, { value: 14, diff: 0 }, { value: 15, diff: 0 }, { value: 16, diff: 0 },
+  { value: 18, diff: 0 }, { value: 20, diff: 0 }, { value: 21, diff: 0 }, { value: 24, diff: 0 },
+  { value: 25, diff: 0 }, { value: 27, diff: 0 }, { value: 28, diff: 0 }, { value: 30, diff: 0 },
+  { value: 32, diff: 0 }, { value: 35, diff: 0 }, { value: 36, diff: 0 }, { value: 40, diff: 0 },
+  { value: 12, diff: 0 },
 
-  // LEVEL 1: NORMAL (42 numbers) - Common composite numbers
-  { value: 14, diff: 1 }, { value: 15, diff: 1 },
-  { value: 16, diff: 1 }, { value: 18, diff: 1 },
-  { value: 21, diff: 1 }, { value: 22, diff: 1 },
-  { value: 25, diff: 1 }, { value: 26, diff: 1 },
-  { value: 27, diff: 1 }, { value: 28, diff: 1 },
-  { value: 32, diff: 1 }, { value: 33, diff: 1 },
-  { value: 34, diff: 1 }, { value: 35, diff: 1 },
-  { value: 38, diff: 1 }, { value: 39, diff: 1 },
-  { value: 42, diff: 1 }, { value: 44, diff: 1 },
-  { value: 45, diff: 1 }, { value: 46, diff: 1 },
-  { value: 49, diff: 1 }, { value: 52, diff: 1 },
-  { value: 54, diff: 1 }, { value: 55, diff: 1 },
-  { value: 56, diff: 1 }, { value: 63, diff: 1 },
-  { value: 64, diff: 1 }, { value: 65, diff: 1 },
-  { value: 66, diff: 1 }, { value: 70, diff: 1 },
-  { value: 75, diff: 1 }, { value: 77, diff: 1 },
-  { value: 78, diff: 1 }, { value: 81, diff: 1 },
+  // LEVEL 1: NORMAL (20 numbers) - 40以下质数 & 40-81乘加减数字
+  { value: 11, diff: 1 }, { value: 13, diff: 1 }, { value: 17, diff: 1 }, { value: 19, diff: 1 },
+  { value: 23, diff: 1 }, { value: 29, diff: 1 }, { value: 31, diff: 1 }, { value: 37, diff: 1 },
+  { value: 41, diff: 1 }, { value: 43, diff: 1 }, { value: 47, diff: 1 }, { value: 53, diff: 1 },
+  { value: 59, diff: 1 }, { value: 61, diff: 1 }, { value: 67, diff: 1 }, { value: 71, diff: 1 },
+  { value: 73, diff: 1 }, { value: 79, diff: 1 }, { value: 49, diff: 1 }, { value: 81, diff: 1 },
 
+  // LEVEL 2: HARD (16 numbers) - 81-100的所有非质数数字
+  { value: 82, diff: 2 }, { value: 84, diff: 2 }, { value: 85, diff: 2 }, { value: 86, diff: 2 },
+  { value: 87, diff: 2 }, { value: 88, diff: 2 }, { value: 90, diff: 2 }, { value: 91, diff: 2 },
+  { value: 92, diff: 2 }, { value: 93, diff: 2 }, { value: 94, diff: 2 }, { value: 95, diff: 2 },
+  { value: 96, diff: 2 }, { value: 98, diff: 2 }, { value: 99, diff: 2 }, { value: 100, diff: 2 },
 
-  // LEVEL 2: HARD (34 numbers) - Small primes and trickier numbers < 100
-  { value: 23, diff: 2 }, { value: 29, diff: 2 },
-  { value: 31, diff: 2 }, { value: 37, diff: 2 },
-  { value: 41, diff: 2 }, { value: 43, diff: 2 },
-  { value: 47, diff: 2 }, { value: 51, diff: 2 },
-  { value: 53, diff: 2 }, { value: 57, diff: 2 },
-  { value: 58, diff: 2 }, { value: 59, diff: 2 },
-  { value: 61, diff: 2 }, { value: 62, diff: 2 },
-  { value: 67, diff: 2 }, { value: 68, diff: 2 },
-  { value: 69, diff: 2 }, { value: 71, diff: 2 },
-  { value: 73, diff: 2 }, { value: 74, diff: 2 },
-  { value: 76, diff: 2 }, { value: 79, diff: 2 },
-  { value: 85, diff: 2 }, { value: 88, diff: 2 },
-  { value: 86, diff: 2 }, { value: 87, diff: 2 },
-  { value: 89, diff: 2 }, { value: 93, diff: 2 },
-  { value: 94, diff: 2 }, { value: 97, diff: 2 },
+  // LEVEL 3: EXPERT (20 numbers) - 100-130以内非质数
+  { value: 102, diff: 3 }, { value: 104, diff: 3 }, { value: 105, diff: 3 }, { value: 108, diff: 3 },
+  { value: 110, diff: 3 }, { value: 111, diff: 3 }, { value: 112, diff: 3 }, { value: 114, diff: 3 },
+  { value: 115, diff: 3 }, { value: 116, diff: 3 }, { value: 117, diff: 3 }, { value: 118, diff: 3 },
+  { value: 119, diff: 3 }, { value: 120, diff: 3 }, { value: 121, diff: 3 }, { value: 122, diff: 3 },
+  { value: 123, diff: 3 }, { value: 124, diff: 3 }, { value: 126, diff: 3 }, { value: 128, diff: 3 },
 
-  // LEVEL 3: EXPERT (42 numbers) - Composites 100-160
-  { value: 102, diff: 3 }, { value: 104, diff: 3 },
-  { value: 105, diff: 3 }, { value: 106, diff: 3 },
-  { value: 108, diff: 3 }, { value: 110, diff: 3 },
-  { value: 111, diff: 3 }, { value: 112, diff: 3 },
-  { value: 114, diff: 3 }, { value: 115, diff: 3 },
-  { value: 116, diff: 3 }, { value: 117, diff: 3 },
-  { value: 118, diff: 3 }, { value: 119, diff: 3 },
-  { value: 121, diff: 3 }, { value: 122, diff: 3 },
-  { value: 123, diff: 3 }, { value: 124, diff: 3 },
-  { value: 125, diff: 3 }, { value: 126, diff: 3 },
-  { value: 128, diff: 3 }, { value: 129, diff: 3 },
-  { value: 130, diff: 3 }, { value: 132, diff: 3 },
-  { value: 133, diff: 3 }, { value: 134, diff: 3 },
-  { value: 135, diff: 3 }, { value: 136, diff: 3 },
-  { value: 138, diff: 3 }, { value: 141, diff: 3 },
-  { value: 142, diff: 3 }, { value: 143, diff: 3 },
-  { value: 145, diff: 3 }, { value: 146, diff: 3 },
-  { value: 147, diff: 3 }, { value: 148, diff: 3 },
-  { value: 152, diff: 3 }, { value: 153, diff: 3 },
-  { value: 154, diff: 3 }, { value: 155, diff: 3 },
-  { value: 156, diff: 3 }, { value: 158, diff: 3 },
+  // LEVEL 4: MASTER (20 numbers) - 100-130质数 & 130-160非质数
+  { value: 101, diff: 4 }, { value: 103, diff: 4 }, { value: 107, diff: 4 }, { value: 109, diff: 4 },
+  { value: 113, diff: 4 }, { value: 127, diff: 4 }, { value: 132, diff: 4 }, { value: 133, diff: 4 },
+  { value: 134, diff: 4 }, { value: 135, diff: 4 }, { value: 136, diff: 4 }, { value: 138, diff: 4 },
+  { value: 140, diff: 4 }, { value: 142, diff: 4 }, { value: 143, diff: 4 }, { value: 144, diff: 4 },
+  { value: 145, diff: 4 }, { value: 152, diff: 4 }, { value: 153, diff: 4 }, { value: 155, diff: 4 },
 
-  // LEVEL 4: MASTER (28 numbers) - Primes and complex composites 100-180
-  { value: 101, diff: 4 }, { value: 103, diff: 4 },
-  { value: 107, diff: 4 }, { value: 109, diff: 4 },
-  { value: 113, diff: 4 }, { value: 127, diff: 4 },
-  { value: 131, diff: 4 }, { value: 137, diff: 4 },
-  { value: 139, diff: 4 }, { value: 149, diff: 4 },
-  { value: 151, diff: 4 }, { value: 157, diff: 4 },
-  { value: 159, diff: 4 }, { value: 161, diff: 4 },
-  { value: 162, diff: 4 }, { value: 164, diff: 4 },
-  { value: 165, diff: 4 }, { value: 166, diff: 4 },
-  { value: 168, diff: 4 }, { value: 170, diff: 4 },
-  { value: 171, diff: 4 }, { value: 172, diff: 4 },
-  { value: 174, diff: 4 }, { value: 175, diff: 4 },
-  { value: 176, diff: 4 }, { value: 177, diff: 4 },
-  { value: 178, diff: 4 },
-
-  // LEVEL 5: LEGEND (30 numbers) - Primes and very large numbers nearing 200
-  { value: 163, diff: 5 }, { value: 167, diff: 5 },
-  { value: 169, diff: 5 }, { value: 173, diff: 5 },
-  { value: 179, diff: 5 }, { value: 181, diff: 5 },
-  { value: 182, diff: 5 }, { value: 183, diff: 5 },
-  { value: 184, diff: 5 }, { value: 185, diff: 5 },
-  { value: 186, diff: 5 }, { value: 187, diff: 5 },
-  { value: 188, diff: 5 }, { value: 189, diff: 5 },
-  { value: 190, diff: 5 }, { value: 191, diff: 5 },
-  { value: 192, diff: 5 }, { value: 193, diff: 5 },
-  { value: 194, diff: 5 }, { value: 195, diff: 5 },
-  { value: 196, diff: 5 }, { value: 197, diff: 5 },
-  { value: 198, diff: 5 }, { value: 199, diff: 5 }
+  // LEVEL 5: LEGEND (20 numbers) - 130-160质数 & 160-200非质数
+  { value: 131, diff: 5 }, { value: 137, diff: 5 }, { value: 139, diff: 5 }, { value: 149, diff: 5 },
+  { value: 151, diff: 5 }, { value: 157, diff: 5 }, { value: 161, diff: 5 }, { value: 169, diff: 5 },
+  { value: 171, diff: 5 }, { value: 177, diff: 5 }, { value: 183, diff: 5 }, { value: 187, diff: 5 },
+  { value: 189, diff: 5 }, { value: 162, diff: 5 }, { value: 168, diff: 5 }, { value: 174, diff: 5 },
+  { value: 182, diff: 5 }, { value: 186, diff: 5 }, { value: 190, diff: 5 }, { value: 198, diff: 5 }
 ];
 
 /**
@@ -407,7 +351,7 @@ export const getRandomEasyTarget = (): TargetData => {
 };
 
 // 预计算常用组合池
-const WARMUP_POOL = TARGET_CATALOG.filter(t => t.value < 40 && t.diff <= 1);
+const WARMUP_POOL = TARGET_CATALOG.filter(t => t.value < 36 && t.diff <= 1);
 
 /**
  * ==========================================
@@ -442,10 +386,10 @@ export const SEQUENCE_PATTERNS = {
     name: 'Normal',
     length: 6,
     steps: [
-      { diffGroup: 'EASY_NORMAL', description: '前两个从难度0-1中随机取' },
-      { diffGroup: 'EASY_NORMAL', description: '前两个从难度0-1中随机取' },
+      { diffGroup: 'EASY', description: '第一个从难度0中取' },
+      { diffGroup: 'NORMAL', description: '第二个从难度1中取' },
       { diffGroup: 'HARD', description: '第三个从难度2中取' },
-      { diffGroup: 'EASY_NORMAL', description: '第四个从难度0-1中取' },
+      { diffGroup: 'EASY', description: '第四个从难度0中取' },
       { diffGroup: 'HARD', description: '第五个从难度2中取' },
       { diffGroup: 'EXPERT', description: '第六个从难度3中取' },
     ]

@@ -142,7 +142,7 @@ const TargetCard: React.FC<TargetCardProps> = ({ gameState, timeLeft, maxTime, c
                             </span>
                         </div>
                     </div>
-                    <div className="flex items-baseline gap-1">
+                    <div className="flex items-baseline gap-1 opacity-0">
                         <span className={`text-base font-mono font-black tracking-tighter ${effectiveTimeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-gray-900'}`}>
                             {effectiveTimeLeft.toFixed(1)}
                         </span>
